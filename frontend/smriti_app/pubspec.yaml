@@ -1,0 +1,42 @@
+name: smriti_app
+description: "SMRITI - Offline-First Voice-Driven Cognitive Care Platform"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Voice Assistant & Speech Recognition (behind SttAdapter)
+  speech_to_text: ^7.0.0
+  permission_handler: ^11.3.1
+  # Whisper.cpp offline STT (behind WhisperSttAdapter)
+  whisper_ggml: ^2.6.0
+  record: ^7.1.1
+
+  # IndicTTS Audio Playback & Network (strictly no Bhashini)
+  http: ^1.2.2
+  audioplayers: ^6.1.0
+
+  # Reminders & Scheduled Offline Notifications
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
+
+  # Local Offline Persistence (isolated from team database)
+  shared_preferences: ^2.3.3
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
