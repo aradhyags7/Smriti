@@ -3,7 +3,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 
-from app.models.models import Patient
+from app.models import Patient
 from app.schemas.patient import PatientCreate
 
 

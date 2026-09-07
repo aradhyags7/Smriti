@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.cognitive_metric import CognitiveMetric
+from app.models.cognitive_metric import CognitiveMetric
 
 class CognitiveRepository:
     def __init__(self, db: Session):

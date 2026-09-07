@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.models import User
-from app.schemas.game import GameAttemptCreate, GameAttemptOut
+from app.models import User
+from app.schemas.game import GameAttemptCreate, GameAttemptResponse
 from app.services.game_service import record_game_attempt
 
 router = APIRouter()
@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post(
     "/attempt",
-    response_model=GameAttemptOut,
+    response_model=GameAttemptResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Record a game attempt",
 )

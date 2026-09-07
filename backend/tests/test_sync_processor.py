@@ -4,13 +4,13 @@
 import pytest
 import uuid
 from datetime import datetime
-from backend.app.models.patient import Patient
-from backend.app.models.game_attempt import GameAttempt
-from backend.app.models.daily_checkin import DailyCheckin
-from backend.app.models.sync_record import SyncRecord
-from backend.app.sync.sync_processor import SyncProcessor
-from backend.app.sync.sync_validator import SyncValidator
-from backend.app.sync.sync_conflict import SyncConflictResolver
+from app.models.patient import Patient
+from app.models.game_attempt import GameAttempt
+from app.models.daily_checkin import DailyCheckin
+from app.models.sync_record import SyncRecord
+from app.sync.sync_processor import SyncProcessor
+from app.sync.sync_validator import SyncValidator
+from app.sync.sync_conflict import SyncConflictResolver
 
 def test_sync_validator():
     # Valid payload

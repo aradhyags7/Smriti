@@ -2,7 +2,7 @@
 SMRITI Pydantic v2 Schema Package.
 
 Re-exports every public schema for convenient imports:
-    from backend.app.schemas import GameAttemptCreate, SyncPayloadRequest
+    from app.schemas import GameAttemptCreate, SyncPayloadRequest
 """
 
 # ── Auth ──────────────────────────────────────────────────────────────────

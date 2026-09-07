@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.session import Session as DbSession
+from app.models.session import Session as DbSession
 
 class SessionRepository:
     def __init__(self, db: Session):

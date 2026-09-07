@@ -5,17 +5,17 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, List
 from sqlalchemy.orm import Session
-from backend.app.models.patient import Patient
-from backend.app.models.game_attempt import GameAttempt
-from backend.app.models.daily_checkin import DailyCheckin
-from backend.app.models.reminder import Reminder
-from backend.app.models.session import Session as DbSession
-from backend.app.repositories.patient_repository import PatientRepository
-from backend.app.repositories.game_repository import GameRepository
-from backend.app.repositories.checkin_repository import CheckinRepository
-from backend.app.repositories.reminder_repository import ReminderRepository
-from backend.app.repositories.session_repository import SessionRepository
-from backend.app.repositories.sync_repository import SyncRepository
+from app.models.patient import Patient
+from app.models.game_attempt import GameAttempt
+from app.models.daily_checkin import DailyCheckin
+from app.models.reminder import Reminder
+from app.models.session import Session as DbSession
+from app.repositories.patient_repository import PatientRepository
+from app.repositories.game_repository import GameRepository
+from app.repositories.checkin_repository import CheckinRepository
+from app.repositories.reminder_repository import ReminderRepository
+from app.repositories.session_repository import SessionRepository
+from app.repositories.sync_repository import SyncRepository
 from .sync_validator import SyncValidator
 from .sync_status import SyncAckResponse, SyncStatus
 

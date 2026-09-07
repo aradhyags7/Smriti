@@ -3,7 +3,7 @@
 
 from typing import List
 from sqlalchemy.orm import Session
-from backend.app.models.daily_checkin import DailyCheckin
+from app.models.daily_checkin import DailyCheckin
 
 class CheckinRepository:
     def __init__(self, db: Session):

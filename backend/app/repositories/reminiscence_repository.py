@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.reminiscence import Reminiscence
+from app.models.reminiscence import Reminiscence
 
 class ReminiscenceRepository:
     def __init__(self, db: Session):

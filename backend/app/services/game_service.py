@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.models.models import GameAttempt
+from app.models import GameAttempt
 from app.schemas.game import GameAttemptCreate
 
 

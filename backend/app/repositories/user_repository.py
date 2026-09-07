@@ -3,7 +3,7 @@
 
 from typing import Optional, List
 from sqlalchemy.orm import Session
-from backend.app.models.user import User
+from app.models.user import User
 
 class UserRepository:
     def __init__(self, db: Session):

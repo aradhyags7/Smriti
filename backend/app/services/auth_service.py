@@ -4,26 +4,28 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
-from app.models.models import User
-from app.schemas.auth import UserRegister
+from app.models import User
+from app.schemas.auth import UserSignupRequest
 
 
-def register_user(db: Session, user_data: UserRegister) -> User:
+def register_user(db: Session, user_data: UserSignupRequest) -> User:
     """Register a new user account.
 
     Raises:
-        ValueError: If a user with the given email already exists.
+        ValueError: If a user with the given phone number already exists.
     """
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    existing_user = db.query(User).filter(User.phone_number == user_data.phone_number).first()
     if existing_user:
-        raise ValueError(f"User with email '{user_data.email}' already exists")
+        raise ValueError(f"User with phone number '{user_data.phone_number}' already exists")
 
-    hashed_pw = get_password_hash(user_data.password)
+    hashed_pw = get_password_hash(user_data.pin)
     user = User(
-        email=user_data.email,
+        phone_number=user_data.phone_number,
         hashed_password=hashed_pw,
         full_name=user_data.full_name,
         role=user_data.role,
+        preferred_language=user_data.preferred_language,
+        email=user_data.email
     )
     db.add(user)
     db.commit()
@@ -31,17 +33,17 @@ def register_user(db: Session, user_data: UserRegister) -> User:
     return user
 
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    """Authenticate a user with email and plain password.
+def authenticate_user(db: Session, phone_number: str, pin: str) -> Optional[User]:
+    """Authenticate a user with phone number and plain PIN.
 
     Returns:
         User model if authentication succeeds, None otherwise.
     """
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.phone_number == phone_number).first()
     if not user:
         return None
 
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(pin, user.hashed_password):
         return None
 
     return user

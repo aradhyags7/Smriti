@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.alert import Alert
+from app.models.alert import Alert
 
 class AlertRepository:
     def __init__(self, db: Session):

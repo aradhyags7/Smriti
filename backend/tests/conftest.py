@@ -4,9 +4,10 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from backend.app.core.database import Base
+from sqlalchemy.pool import StaticPool
+from app.core.database import Base
 # Import all models to register with Base.metadata
-import backend.app.models  # noqa: F401
+import app.models  # noqa: F401
 
 @pytest.fixture(scope="function")
 def db_session():
@@ -15,7 +16,8 @@ def db_session():
     """
     engine = create_engine(
         "sqlite:///:memory:",
-        connect_args={"check_same_thread": False}
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool
     )
     Base.metadata.create_all(bind=engine)
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

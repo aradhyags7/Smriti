@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.models import User
-from app.schemas.patient import PatientCreate, PatientOut
+from app.models import User
+from app.schemas.patient import PatientCreate, PatientResponse
 from app.services.patient_service import create_patient, get_patient
 
 router = APIRouter()
@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post(
     "/",
-    response_model=PatientOut,
+    response_model=PatientResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new patient",
 )
@@ -30,7 +30,7 @@ def create_new_patient(
 
 @router.get(
     "/{patient_id}",
-    response_model=PatientOut,
+    response_model=PatientResponse,
     summary="Get patient by ID",
 )
 def get_patient_by_id(

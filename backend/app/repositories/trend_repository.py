@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.cognitive_trend import CognitiveTrend
+from app.models.cognitive_trend import CognitiveTrend
 
 class TrendRepository:
     def __init__(self, db: Session):
