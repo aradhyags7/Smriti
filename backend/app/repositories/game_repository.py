@@ -19,7 +19,7 @@ class GameRepository:
         return (
             self.db.query(GameAttempt)
             .filter(GameAttempt.patient_id == patient_id)
-            .order_by(GameAttempt.timestamp.desc())
+            .order_by(GameAttempt.completed_at.desc())
             .limit(limit)
             .all()
         )

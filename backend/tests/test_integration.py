@@ -55,10 +55,9 @@ async def test_end_to_end_lifecycle(db_session):
             "emergency_contact_phone": "+918888888888",
         }
         res = await client.post("/api/v1/patients/", json=patient_data, headers=headers)
-        if res.status_code == 404:
-            # If routes are not fully implemented yet, just skip gracefully
-            pytest.skip("Patient creation route not implemented yet")
         assert res.status_code in (200, 201), f"Create patient failed: {res.text}"
         patient_id = res.json()["id"]
 
-        pytest.skip("Remaining routes and models not fully integrated with new schemas yet")
+        # ---------------------------------------------------------
+        # Phase 4: Offline Sync (Push Data)
+        # ---------------------------------------------------------

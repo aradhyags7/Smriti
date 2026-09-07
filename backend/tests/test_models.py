@@ -24,6 +24,8 @@ def test_models_creation_and_relationships(db_session):
     # 1. Create Users
     caregiver_user = User(
         id="usr_cg_1",
+        full_name="Rahul Sharma",
+        phone_number="+919876543210",
         email="rahul@example.com",
         hashed_password="hashed_secret_pw",
         role="CAREGIVER",
@@ -31,6 +33,8 @@ def test_models_creation_and_relationships(db_session):
     )
     asha_user = User(
         id="usr_asha_1",
+        full_name="Anita Deka",
+        phone_number="+919876500000",
         email="anita.asha@assam.gov.in",
         hashed_password="hashed_secret_pw",
         role="ASHA",
@@ -38,6 +42,8 @@ def test_models_creation_and_relationships(db_session):
     )
     patient_user = User(
         id="usr_pat_1",
+        full_name="Kamala Devi",
+        phone_number="+918888888888",
         email="kamala.devi@smriti.local",
         hashed_password="hashed_secret_pw",
         role="PATIENT",
@@ -71,10 +77,12 @@ def test_models_creation_and_relationships(db_session):
         user_id=patient_user.id,
         caregiver_id=caregiver.id,
         asha_worker_id=asha.id,
-        name="Kamala Devi",
-        age=72,
-        language="as",
-        location="Dibrugarh, Assam",
+        date_of_birth=datetime(1950, 1, 1).date(),
+        gender="female",
+        education_level="primary",
+        primary_language="as",
+        emergency_contact_name="Rahul Sharma",
+        emergency_contact_phone="+919876543210",
         baseline_memory=75.0,
         baseline_attention=70.0,
         baseline_engagement=85.0,
@@ -99,21 +107,23 @@ def test_models_creation_and_relationships(db_session):
     )
     game_attempt = GameAttempt(
         id="ga_1",
+        client_attempt_id="client_ga_1",
         patient_id=patient.id,
         game_type="memory_pairs",
         score=85.0,
         mistakes=1,
         reaction_time_ms=1250.0,
-        difficulty="MEDIUM",
+        completion_time_seconds=30,
+        difficulty="medium",
         completed=True,
     )
     checkin = DailyCheckin(
         id="chk_1",
+        client_checkin_id="client_chk_1",
         patient_id=patient.id,
-        mood=4,
-        sleep_quality=4,
-        activity_level=3,
-        notes="Felt refreshed after morning tea.",
+        mood_score=4,
+        sleep_hours=8.0,
+        symptoms_noted="Felt refreshed after morning tea.",
     )
     reminder = Reminder(
         id="rem_1",
@@ -189,7 +199,7 @@ def test_models_creation_and_relationships(db_session):
     assert len(patient.game_attempts) == 1
     assert patient.game_attempts[0].game_type == "memory_pairs"
     assert len(patient.checkins) == 1
-    assert patient.checkins[0].mood == 4
+    assert patient.checkins[0].mood_score == 4
     assert len(patient.reminders) == 1
     assert patient.reminders[0].reminder_type == "MEDICINE"
     assert len(patient.memories) == 1

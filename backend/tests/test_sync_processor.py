@@ -4,6 +4,7 @@
 import pytest
 import uuid
 from datetime import datetime
+from app.models.user import User
 from app.models.patient import Patient
 from app.models.game_attempt import GameAttempt
 from app.models.daily_checkin import DailyCheckin
@@ -71,13 +72,26 @@ def test_sync_conflict_resolver():
 def test_sync_batch_processor_e2e_and_idempotency(db_session):
     processor = SyncProcessor(db_session)
 
+    pat_user = User(
+        id="usr_sync_pat_100",
+        full_name="Kamala Devi",
+        phone_number="+919876543210",
+        hashed_password="hashed_pw_dummy",
+        role="PATIENT"
+    )
+    db_session.add(pat_user)
+    db_session.commit()
+
     # Seed patient
     patient = Patient(
         id="pat_sync_100",
-        name="Kamala Devi",
-        age=72,
-        language="as",
-        location="Dibrugarh, Assam",
+        user_id=pat_user.id,
+        date_of_birth=datetime(1954, 1, 1).date(),
+        gender="female",
+        education_level="primary",
+        primary_language="as",
+        emergency_contact_name="Kamala Devi Son",
+        emergency_contact_phone="+919876543210",
         consent_for_asha=True,
     )
     db_session.add(patient)
@@ -169,7 +183,7 @@ def test_sync_batch_processor_e2e_and_idempotency(db_session):
 
     checkins = db_session.query(DailyCheckin).filter(DailyCheckin.patient_id == patient.id).all()
     assert len(checkins) == 1
-    assert checkins[0].mood == 5
+    assert checkins[0].mood_score == 5
 
     sync_records = db_session.query(SyncRecord).filter(SyncRecord.patient_id == patient.id).all()
     assert len(sync_records) == 4

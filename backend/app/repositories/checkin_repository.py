@@ -30,7 +30,7 @@ class CheckinRepository:
         return (
             self.db.query(DailyCheckin)
             .filter(DailyCheckin.patient_id == patient_id)
-            .order_by(DailyCheckin.timestamp.desc())
+            .order_by(DailyCheckin.checkin_time.desc())
             .limit(limit)
             .all()
         )
