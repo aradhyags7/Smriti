@@ -37,6 +37,8 @@ def test_user_and_patient_repositories(db_session):
     # User CRUD
     u = User(
         id="usr_rep_1",
+        full_name="Aradhya Caregiver",
+        phone_number="+919988776655",
         email="caregiver.aradhya@test.com",
         hashed_password="password_hash_123",
         role="CAREGIVER",
@@ -62,14 +64,27 @@ def test_user_and_patient_repositories(db_session):
     db_session.add(cg)
     db_session.commit()
 
+    pat_user = User(
+        id="usr_pat_rep_1",
+        full_name="Lila Bordoloi",
+        phone_number="+918888888888",
+        hashed_password="dummy_password",
+        role="PATIENT"
+    )
+    db_session.add(pat_user)
+    db_session.commit()
+
     # Patient CRUD
     pat = Patient(
         id="pat_rep_1",
+        user_id=pat_user.id,
         caregiver_id=cg.id,
-        name="Lila Bordoloi",
-        age=68,
-        language="as",
-        location="Jorhat, Assam",
+        date_of_birth=datetime(1958, 1, 1).date(),
+        gender="female",
+        education_level="primary",
+        primary_language="as",
+        emergency_contact_name="Aradhya Caregiver",
+        emergency_contact_phone="+919988776655",
         baseline_memory=72.0,
         baseline_attention=68.0,
         baseline_engagement=80.0,
@@ -79,7 +94,7 @@ def test_user_and_patient_repositories(db_session):
 
     retrieved_pat = patient_repo.get_by_id("pat_rep_1")
     assert retrieved_pat is not None
-    assert retrieved_pat.name == "Lila Bordoloi"
+    assert retrieved_pat.emergency_contact_name == "Aradhya Caregiver"
 
     all_patients = patient_repo.get_all()
     assert len(all_patients) >= 1
@@ -89,12 +104,25 @@ def test_user_and_patient_repositories(db_session):
     assert cg_patients[0].id == "pat_rep_1"
 
 def test_activity_and_intelligence_repositories(db_session):
+    pat_user = User(
+        id="usr_pat_rep_2",
+        full_name="Biren Saikia",
+        phone_number="+917777777777",
+        hashed_password="dummy_password",
+        role="PATIENT"
+    )
+    db_session.add(pat_user)
+    db_session.commit()
+
     patient = Patient(
         id="pat_rep_2",
-        name="Biren Saikia",
-        age=75,
-        language="as",
-        location="Nagaon, Assam",
+        user_id=pat_user.id,
+        date_of_birth=datetime(1951, 1, 1).date(),
+        gender="male",
+        education_level="secondary",
+        primary_language="as",
+        emergency_contact_name="Biren Saikia",
+        emergency_contact_phone="+919876543210",
     )
     db_session.add(patient)
     db_session.commit()
@@ -116,13 +144,14 @@ def test_activity_and_intelligence_repositories(db_session):
 
     ga = GameAttempt(
         id="ga_rep_1",
+        client_attempt_id="client_ga_rep_1",
         session_id=ses.id,
         patient_id=patient.id,
         game_type="odd_one_out",
         score=90.0,
         mistakes=0,
         reaction_time_ms=1100.0,
-        difficulty="EASY",
+        difficulty="easy",
     )
     game_repo.save_game_attempt(ga)
     attempts = game_repo.get_patient_attempts(patient.id)
@@ -133,16 +162,16 @@ def test_activity_and_intelligence_repositories(db_session):
     checkin_repo = CheckinRepository(db_session)
     chk = DailyCheckin(
         id="chk_rep_1",
+        client_checkin_id="client_chk_rep_1",
         patient_id=patient.id,
-        mood=5,
-        sleep_quality=4,
-        activity_level=4,
-        notes="Active day",
+        mood_score=5,
+        sleep_hours=8.0,
+        symptoms_noted="Active day",
     )
     checkin_repo.save_checkin(chk)
     checkins = checkin_repo.get_patient_checkins(patient.id)
     assert len(checkins) == 1
-    assert checkins[0].mood == 5
+    assert checkins[0].mood_score == 5
 
     # 3. Reminder & Reminiscence
     reminder_repo = ReminderRepository(db_session)

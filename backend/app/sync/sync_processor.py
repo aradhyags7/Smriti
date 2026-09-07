@@ -72,14 +72,16 @@ class SyncProcessor:
             if event_type in ("GAME_ATTEMPT", "game_attempt"):
                 attempt = GameAttempt(
                     id=f"GA-{uuid.uuid4().hex[:8]}",
+                    client_attempt_id=event_id,
                     patient_id=patient_id,
                     game_type=event_payload.get("game_type", "memory_pairs"),
                     score=float(event_payload.get("score", 70.0)),
                     mistakes=int(event_payload.get("mistakes", 0)),
                     reaction_time_ms=float(event_payload.get("reaction_time_ms", 1200.0)),
-                    difficulty=str(event_payload.get("difficulty", "EASY")),
+                    difficulty=str(event_payload.get("difficulty", "easy")),
+                    completion_time_seconds=int(event_payload.get("completion_time_seconds", 0)),
                     completed=bool(event_payload.get("completed", True)),
-                    timestamp=created_at,
+                    completed_at=datetime.fromisoformat(created_at) if isinstance(created_at, str) else datetime.utcnow(),
                     sync_status=SyncStatus.SYNCED.value,
                 )
                 self.game_repo.save_game_attempt(attempt)
@@ -87,12 +89,12 @@ class SyncProcessor:
             elif event_type in ("DAILY_CHECKIN", "daily_checkin"):
                 checkin = DailyCheckin(
                     id=f"DC-{uuid.uuid4().hex[:8]}",
+                    client_checkin_id=event_id,
                     patient_id=patient_id,
-                    mood=int(event_payload.get("mood", 4)),
-                    sleep_quality=int(event_payload.get("sleep_quality", 3)),
-                    activity_level=int(event_payload.get("activity_level", 3)),
-                    notes=event_payload.get("notes"),
-                    timestamp=created_at,
+                    mood_score=int(event_payload.get("mood_score", event_payload.get("mood", 4))),
+                    sleep_hours=float(event_payload.get("sleep_hours", event_payload.get("sleep_quality", 3.0))),
+                    symptoms_noted=event_payload.get("symptoms_noted", event_payload.get("notes")),
+                    checkin_time=datetime.fromisoformat(created_at) if isinstance(created_at, str) else datetime.utcnow(),
                     sync_status=SyncStatus.SYNCED.value,
                 )
                 self.checkin_repo.save_checkin(checkin)
