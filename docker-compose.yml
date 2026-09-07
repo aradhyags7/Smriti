@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smriti_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://smriti:smritipass@db:5432/smriti
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: ../deployment/docker/Dockerfile.dashboard
+    container_name: smriti_dashboard
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: smriti_db
+    environment:
+      - POSTGRES_USER=smriti
+      - POSTGRES_PASSWORD=smritipass
+      - POSTGRES_DB=smriti
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
