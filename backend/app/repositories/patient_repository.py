@@ -3,7 +3,7 @@
 
 from typing import Optional, List, Dict
 from sqlalchemy.orm import Session
-from backend.app.models.patient import Patient
+from app.models.patient import Patient
 
 class PatientRepository:
     def __init__(self, db: Session):

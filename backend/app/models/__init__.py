@@ -1,5 +1,8 @@
-# SMRITI Models Package
-# Owner: Aradhya (AI + Database + Sync)
+
+"""SMRITI SQLAlchemy Models Package.
+
+Exports all database entities and enums for convenient access.
+"""
 
 from .user import User
 from .caregiver import Caregiver

@@ -4,7 +4,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from backend.app.core.database import Base
+from app.core.database import Base
 
 class DailyCheckin(Base):
     __tablename__ = "daily_checkins"

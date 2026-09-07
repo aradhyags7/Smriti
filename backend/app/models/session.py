@@ -4,7 +4,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-from backend.app.core.database import Base
+from app.core.database import Base
 
 class Session(Base):
     __tablename__ = "sessions"

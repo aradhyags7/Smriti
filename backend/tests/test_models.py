@@ -4,7 +4,7 @@
 import pytest
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from backend.app.models import (
+from app.models import (
     User,
     Caregiver,
     AshaWorker,

@@ -3,7 +3,7 @@
 
 from sqlalchemy import Column, String, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from backend.app.core.database import Base
+from app.core.database import Base
 
 class Reminder(Base):
     __tablename__ = "reminders"

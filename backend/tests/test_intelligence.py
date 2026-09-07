@@ -3,7 +3,7 @@
 
 import pytest
 from datetime import datetime, timedelta
-from backend.app.intelligence import (
+from app.intelligence import (
     RiskEngine,
     AdaptiveDifficultyEngine,
     BaselineEngine,

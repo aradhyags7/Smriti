@@ -3,7 +3,7 @@
 
 import pytest
 from datetime import datetime
-from backend.app.models import (
+from app.models import (
     User,
     Caregiver,
     Patient,
@@ -16,7 +16,7 @@ from backend.app.models import (
     CognitiveTrend,
     Alert,
 )
-from backend.app.repositories import (
+from app.repositories import (
     UserRepository,
     PatientRepository,
     SessionRepository,

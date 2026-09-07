@@ -4,7 +4,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from backend.app.core.database import Base
+from app.core.database import Base
 
 class CognitiveMetric(Base):
     __tablename__ = "cognitive_metrics"

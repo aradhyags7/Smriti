@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.game_attempt import GameAttempt
+from app.models.game_attempt import GameAttempt
 
 class GameRepository:
     def __init__(self, db: Session):

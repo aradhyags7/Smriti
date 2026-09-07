@@ -4,7 +4,7 @@
 import json
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from backend.app.models.sync_record import SyncRecord
+from app.models.sync_record import SyncRecord
 
 class SyncRepository:
     def __init__(self, db: Session):
