@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """SMRITI SQLAlchemy Models Package.
 
 Exports all database entities and enums for convenient access.
