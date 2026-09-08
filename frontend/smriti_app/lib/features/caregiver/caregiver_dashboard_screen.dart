@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/localization/app_language.dart';
+import '../../core/localization/language_selection_modal.dart';
 import '../auth/services/auth_service.dart';
 import '../patient/widgets/reminder_card.dart';
 import '../reminders/reminder_model.dart';
@@ -314,9 +316,35 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                   _showConnectPatientModal(context);
                 },
               ),
+                            ValueListenableBuilder<String>(
+                valueListenable: AppLanguage.languageNotifier,
+                builder: (context, langCode, _) {
+                  final curLang = AppLanguage.currentLanguage;
+                  return ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E3A8A).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.translate_rounded, color: Color(0xFF1E3A8A)),
+                    ),
+                    title: Text(
+                      AppLanguage.tr('change_language'),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text('${curLang.nativeName} (${curLang.englishName})'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showLanguageSelectionSheet(context);
+                    },
+                  );
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.redAccent),
-                title: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                title: Text(AppLanguage.tr('sign_out'), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                 subtitle: const Text('Sign out of your account on this device'),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -1101,7 +1129,10 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLanguage.languageNotifier,
+      builder: (context, langCode, _) {
+        return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -1185,15 +1216,17 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(index: 0, iconData: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'Dashboard'),
+              _buildNavItem(index: 0, iconData: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: AppLanguage.tr('caregiver_dashboard')),
               _buildNavItem(index: 1, iconData: Icons.photo_library_outlined, activeIcon: Icons.photo_library, label: 'Vault'),
-              _buildNavItem(index: 2, iconData: Icons.alarm_outlined, activeIcon: Icons.alarm, label: 'Reminders'),
+              _buildNavItem(index: 2, iconData: Icons.alarm_outlined, activeIcon: Icons.alarm, label: AppLanguage.tr('daily_reminders')),
               _buildNavItem(index: 3, iconData: Icons.diversity_1_outlined, activeIcon: Icons.diversity_1, label: 'Care Circle'),
             ],
           ),
         ),
       ),
     );
+    },
+  );
   }
 
   Widget _buildNavItem({

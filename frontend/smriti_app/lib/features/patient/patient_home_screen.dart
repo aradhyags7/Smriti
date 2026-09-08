@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/localization/app_language.dart';
+import '../../core/localization/language_selection_modal.dart';
 import '../auth/services/auth_service.dart';
 import '../reminders/reminder_model.dart';
 import '../reminders/reminder_service.dart';
@@ -199,8 +201,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                   color: const Color(0xFFF1EFE3),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Patient Care Portal',
+                child: Text(
+                  '${AppLanguage.tr('role_patient')} Care Portal',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -211,6 +213,36 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 8),
+                            ValueListenableBuilder<String>(
+                valueListenable: AppLanguage.languageNotifier,
+                builder: (context, langCode, _) {
+                  final curLang = AppLanguage.currentLanguage;
+                  return ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E3A8A).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.translate_rounded, color: Color(0xFF1E3A8A)),
+                    ),
+                    title: Text(
+                      AppLanguage.tr('change_language'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text('${curLang.nativeName} (${curLang.englishName})'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showLanguageSelectionSheet(context);
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
               ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(8),
@@ -220,8 +252,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                   ),
                   child: const Icon(Icons.logout, color: Colors.redAccent),
                 ),
-                title: const Text(
-                  'Log Out',
+                title: Text(
+                  AppLanguage.tr('sign_out'),
                   style: TextStyle(
                     color: Colors.redAccent,
                     fontWeight: FontWeight.bold,
@@ -252,7 +284,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLanguage.languageNotifier,
+      builder: (context, langCode, _) {
+        return Scaffold(
       backgroundColor: const Color(0xFFF9F8F4),
       body: SafeArea(
         child: Column(
@@ -358,18 +393,20 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               _buildNavItem(
                 index: 1,
                 iconData: Icons.support_agent_rounded,
-                label: 'ASHA Worker',
+                label: AppLanguage.tr('role_asha'),
               ),
               _buildNavItem(
                 index: 2,
                 iconData: Icons.alarm_on_rounded,
-                label: 'Reminders',
+                label: AppLanguage.tr('reminders'),
               ),
             ],
           ),
         ),
       ),
     );
+    },
+  );
   }
 
   Widget _buildBodyForSelectedTab() {
@@ -393,7 +430,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         children: [
           const SizedBox(height: 12),
           Text(
-            'Good Morning, $displayName \u{1F338}',
+            '${AppLanguage.tr('good_morning')}, $displayName \u{1F338}',
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: const Color(0xFF0F5A4D),
                   fontWeight: FontWeight.w800,
@@ -418,7 +455,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             badgeColor: const Color(0xFFB4EBA3),
             badgeText: '1 Daily Test',
             badgeIcon: Icons.check_circle_rounded,
-            title: '1. Daily Games',
+            title: '1. ${AppLanguage.tr('daily_games')}',
             subtitle: 'Daily Calibration Test \u2022 Tap to open',
             onTap: () {
               Navigator.push(
@@ -438,7 +475,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             iconData: Icons.extension_rounded,
             badgeColor: const Color(0xFFEFECE1),
             badgeText: '3 Available',
-            title: '2. More Games',
+            title: '2. ${AppLanguage.tr('more_games')}',
             subtitle: 'Pulse Trainer, Wayfinder & Sequence Check \u2022 Tap to browse',
             onTap: () {
               Navigator.push(
@@ -460,7 +497,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             badgeText: _reminders.isNotEmpty
                 ? 'Next: ${_formatTime(_reminders.first.scheduledTime)}'
                 : 'Next: 11:30 AM',
-            title: '3. Reminders',
+            title: '3. ${AppLanguage.tr('reminders')}',
             subtitle: 'Medicines, hydration & daily routine • Tap to view',
             onTap: () {
               setState(() {
@@ -479,7 +516,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             badgeColor: const Color(0xFFB4EBA3),
             badgeText: 'Voice AI',
             badgeIcon: Icons.record_voice_over_rounded,
-            title: '4. Voice Assistant',
+            title: '4. ${AppLanguage.tr('voice_assistant')}',
             subtitle: 'Speak to set reminders, check progress, or play games • Tap to talk',
             onTap: () {
               VoiceAssistantSheet.show(

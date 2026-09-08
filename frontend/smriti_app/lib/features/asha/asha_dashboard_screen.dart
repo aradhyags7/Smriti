@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/localization/app_language.dart';
+import '../../core/localization/language_selection_modal.dart';
 import '../auth/services/auth_service.dart';
 import '../caregiver/services/caregiver_service.dart';
 import '../caregiver/widgets/cognitive_line_chart.dart';
@@ -1464,6 +1466,33 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 8),
+                            ValueListenableBuilder<String>(
+                valueListenable: AppLanguage.languageNotifier,
+                builder: (context, langCode, _) {
+                  final curLang = AppLanguage.currentLanguage;
+                  return ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E3A8A).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.translate_rounded, color: Color(0xFF1E3A8A)),
+                    ),
+                    title: Text(
+                      AppLanguage.tr('change_language'),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text('${curLang.nativeName} (${curLang.englishName})'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showLanguageSelectionSheet(context);
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
               ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(8),
@@ -1473,8 +1502,8 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                   ),
                   child: const Icon(Icons.logout, color: Colors.redAccent),
                 ),
-                title: const Text(
-                  'Log Out',
+                title: Text(
+                  AppLanguage.tr('sign_out'),
                   style: TextStyle(
                     color: Colors.redAccent,
                     fontWeight: FontWeight.bold,
@@ -1502,7 +1531,10 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLanguage.languageNotifier,
+      builder: (context, langCode, _) {
+        return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -1603,6 +1635,8 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
         ),
       ),
     );
+    },
+  );
   }
 
   Widget _buildCurrentBody() {
