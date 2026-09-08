@@ -15,15 +15,6 @@ services:
       - db
     restart: unless-stopped
 
-  dashboard:
-    build:
-      context: ./dashboard
-      dockerfile: ../deployment/docker/Dockerfile.dashboard
-    container_name: smriti_dashboard
-    ports:
-      - "3000:80"
-    restart: unless-stopped
-
   db:
     image: postgres:15-alpine
     container_name: smriti_db

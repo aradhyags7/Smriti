@@ -17,6 +17,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+<<<<<<< HEAD
   audioplayers:
     dependency: "direct main"
     description:
@@ -73,6 +74,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.4.1"
+=======
+>>>>>>> origin/main
   boolean_selector:
     dependency: transitive
     description:
@@ -113,6 +116,25 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.1"
+<<<<<<< HEAD
+=======
+  connectivity_plus:
+    dependency: "direct main"
+    description:
+      name: connectivity_plus
+      sha256: "762c99f890ca8bf87f7337236f99edd42793843bc6c3631da294a76653a54bd0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.3.1"
+  connectivity_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: connectivity_plus_platform_interface
+      sha256: "3c09627c536d22fd24691a905cdd8b14520de69da52c7a97499c8be5284a32ed"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+>>>>>>> origin/main
   crypto:
     dependency: transitive
     description:
@@ -129,6 +151,17 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+<<<<<<< HEAD
+=======
+  dbus:
+    dependency: transitive
+    description:
+      name: dbus
+      sha256: a48d5da28e89bd02196e80d81ed8d7954923d00a0f4a68cc20b575038f023383
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.15"
+>>>>>>> origin/main
   fake_async:
     dependency: transitive
     description:
@@ -153,6 +186,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+<<<<<<< HEAD
   fixnum:
     dependency: transitive
     description:
@@ -161,6 +195,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+=======
+>>>>>>> origin/main
   flutter:
     dependency: "direct main"
     description: flutter
@@ -184,6 +220,17 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+<<<<<<< HEAD
+=======
+  google_fonts:
+    dependency: "direct main"
+    description:
+      name: google_fonts
+      sha256: ba03d03bcaa2f6cb7bd920e3b5027181db75ab524f8891c8bc3aa603885b8055
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.3"
+>>>>>>> origin/main
   hooks:
     dependency: transitive
     description:
@@ -193,7 +240,11 @@ packages:
     source: hosted
     version: "2.0.2"
   http:
+<<<<<<< HEAD
     dependency: transitive
+=======
+    dependency: "direct main"
+>>>>>>> origin/main
     description:
       name: http
       sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
@@ -208,6 +259,17 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+<<<<<<< HEAD
+=======
+  intl:
+    dependency: "direct main"
+    description:
+      name: intl
+      sha256: "1ca20c894b1717686a2319b8548763d812bc0aabdac580420a44c5178c57a867"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.20.3"
+>>>>>>> origin/main
   jni:
     dependency: transitive
     description:
@@ -296,6 +358,17 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.3"
+<<<<<<< HEAD
+=======
+  nm:
+    dependency: transitive
+    description:
+      name: nm
+      sha256: "2c9aae4127bdc8993206464fcc063611e0e36e72018696cd9631023a31b24254"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
+>>>>>>> origin/main
   objective_c:
     dependency: transitive
     description:
@@ -313,7 +386,11 @@ packages:
     source: hosted
     version: "3.0.0"
   path:
+<<<<<<< HEAD
     dependency: transitive
+=======
+    dependency: "direct main"
+>>>>>>> origin/main
     description:
       name: path
       sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
@@ -321,7 +398,11 @@ packages:
     source: hosted
     version: "1.9.1"
   path_provider:
+<<<<<<< HEAD
     dependency: transitive
+=======
+    dependency: "direct main"
+>>>>>>> origin/main
     description:
       name: path_provider
       sha256: a7f4874f987173da295a61c181b8ee71dab59b332a486b391babf26a1b884825
@@ -368,6 +449,17 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
+<<<<<<< HEAD
+=======
+  petitparser:
+    dependency: transitive
+    description:
+      name: petitparser
+      sha256: "91bd59303e9f769f108f8df05e371341b15d59e995e6806aefab827b58336675"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.2"
+>>>>>>> origin/main
   platform:
     dependency: transitive
     description:
@@ -400,6 +492,65 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.0"
+<<<<<<< HEAD
+=======
+  shared_preferences:
+    dependency: "direct main"
+    description:
+      name: shared_preferences
+      sha256: c3025c5534b01739267eb7d76959bbc25a6d10f6988e1c2a3036940133dd10bf
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.5"
+  shared_preferences_android:
+    dependency: transitive
+    description:
+      name: shared_preferences_android
+      sha256: "1e12aafe408aa50da80edfd679a2a6bf63ba7ab37c7fa98286da459a757b3399"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.28"
+  shared_preferences_foundation:
+    dependency: transitive
+    description:
+      name: shared_preferences_foundation
+      sha256: "2ec3934efa51e46117f23031cc141b8fc878e8525b94ec1ea4f7f586cf1b47ea"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.7"
+  shared_preferences_linux:
+    dependency: transitive
+    description:
+      name: shared_preferences_linux
+      sha256: "580abfd40f415611503cae30adf626e6656dfb2f0cee8f465ece7b6defb40f2f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.1"
+  shared_preferences_platform_interface:
+    dependency: transitive
+    description:
+      name: shared_preferences_platform_interface
+      sha256: "649dc798a33931919ea356c4305c2d1f81619ea6e92244070b520187b5140ef9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.2"
+  shared_preferences_web:
+    dependency: transitive
+    description:
+      name: shared_preferences_web
+      sha256: c49bd060261c9a3f0ff445892695d6212ff603ef3115edbb448509d407600019
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.3"
+  shared_preferences_windows:
+    dependency: transitive
+    description:
+      name: shared_preferences_windows
+      sha256: "94ef0f72b2d71bc3e700e025db3710911bd51a71cefb65cc609dd0d9a982e3c1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.1"
+>>>>>>> origin/main
   sky_engine:
     dependency: transitive
     description: flutter
@@ -413,6 +564,49 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.2"
+<<<<<<< HEAD
+=======
+  sqflite:
+    dependency: "direct main"
+    description:
+      name: sqflite
+      sha256: "58a799e6ac17dd32fbab93813d39ed835a75ccc0f8f85b8955fe318c6712b082"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.3"
+  sqflite_android:
+    dependency: transitive
+    description:
+      name: sqflite_android
+      sha256: d0548f9d7422a2dae99ec6f8b0a3074463b132d216fa5ba0d230eeefc901983b
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.3"
+  sqflite_common:
+    dependency: transitive
+    description:
+      name: sqflite_common
+      sha256: "5bf6a55c166e73bf651ba7ec3ed486e577620e3dc8f3a9c6a258a8031b624590"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.11"
+  sqflite_darwin:
+    dependency: transitive
+    description:
+      name: sqflite_darwin
+      sha256: c86ca18b8f666bbf903924687fe21cc16fc385d086005067e26619ca530bef9f
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.3+1"
+  sqflite_platform_interface:
+    dependency: transitive
+    description:
+      name: sqflite_platform_interface
+      sha256: f84939f84350d92d04416f8bc4dc52d3896aec7716cc9e80cf0146342139dc50
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.1"
+>>>>>>> origin/main
   stack_trace:
     dependency: transitive
     description:
@@ -469,6 +663,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+<<<<<<< HEAD
   uuid:
     dependency: transitive
     description:
@@ -477,6 +672,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.6.0"
+=======
+>>>>>>> origin/main
   vector_math:
     dependency: transitive
     description:
@@ -509,6 +706,17 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+<<<<<<< HEAD
+=======
+  xml:
+    dependency: transitive
+    description:
+      name: xml
+      sha256: "67f0aff7be013d107995e9b75bf4e7f2c3ef2dfdb2c8e68024bba0a7fd5756a4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.1"
+>>>>>>> origin/main
   yaml:
     dependency: transitive
     description:
@@ -518,5 +726,9 @@ packages:
     source: hosted
     version: "3.1.4"
 sdks:
+<<<<<<< HEAD
   dart: ">=3.13.2 <4.0.0"
+=======
+  dart: ">=3.12.2 <4.0.0"
+>>>>>>> origin/main
   flutter: ">=3.44.0"
