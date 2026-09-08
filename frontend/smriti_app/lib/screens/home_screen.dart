@@ -25,44 +25,62 @@ class HomeScreen extends StatelessWidget {
 
               // ── Header Brand Section ──
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: SmritiTheme.forestGreen.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.psychology_rounded,
-                      size: 32,
-                      color: SmritiTheme.forestGreen,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Smriti',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: SmritiTheme.forestGreen,
-                              fontSize: 32,
-                              letterSpacing: 0.5,
-                            ),
-                      ),
-                      const Text(
-                        'Gentle Memory Care',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: SmritiTheme.textSubtle,
-                          fontWeight: FontWeight.w600,
+                  if (Navigator.canPop(context))
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: SmritiTheme.forestGreen),
+                      onPressed: () => Navigator.pop(context),
+                      tooltip: 'Back to Home',
+                    )
+                  else
+                    const SizedBox(width: 40),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: SmritiTheme.forestGreen.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.psychology_rounded,
+                            size: 30,
+                            color: SmritiTheme.forestGreen,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Smriti',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: SmritiTheme.forestGreen,
+                                    fontSize: 30,
+                                    letterSpacing: 0.5,
+                                  ),
+                            ),
+                            const Text(
+                              'Gentle Memory Care',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: SmritiTheme.textSubtle,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
+                  if (Navigator.canPop(context))
+                    const SizedBox(width: 48)
+                  else
+                    const SizedBox(width: 40),
                 ],
               ),
               const SizedBox(height: 24),
