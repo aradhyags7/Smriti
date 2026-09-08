@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -29,7 +30,15 @@ class ApiClient {
   ) async {
     final targetUrl = _resolveUrl(url);
     try {
-      return await requestFn(targetUrl);
+      final response = await requestFn(targetUrl);
+      // If live backend returned 404 or 405 (e.g. new routes before Render deployment)
+      // seamlessly retry against local backend in debug mode
+      if (!kReleaseMode && !_useLocalFallback && (response.statusCode == 404 || response.statusCode == 405)) {
+        _useLocalFallback = true;
+        final fallbackUrl = _resolveUrl(url);
+        return await requestFn(fallbackUrl);
+      }
+      return response;
     } on SocketException catch (_) {
       // If live Render host lookup failed (e.g. Android Emulator DNS bug),
       // seamlessly retry against local backend!

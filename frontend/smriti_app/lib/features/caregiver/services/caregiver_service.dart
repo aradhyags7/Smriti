@@ -12,6 +12,7 @@ class CaregiverPatient {
   final String? dateOfBirth;
   final int age;
   final String gender;
+  final String? dementiaType;
   final String relationship;
   final String status;
   final String statusColor;
@@ -31,6 +32,7 @@ class CaregiverPatient {
     this.dateOfBirth,
     required this.age,
     required this.gender,
+    this.dementiaType,
     required this.relationship,
     required this.status,
     required this.statusColor,
@@ -52,6 +54,7 @@ class CaregiverPatient {
       dateOfBirth: json['date_of_birth'],
       age: json['age'] ?? 70,
       gender: json['gender'] ?? 'other',
+      dementiaType: json['dementia_type'],
       relationship: json['relationship'] ?? 'Family Caregiver',
       status: json['status'] ?? 'Active',
       statusColor: json['status_color'] ?? 'green',

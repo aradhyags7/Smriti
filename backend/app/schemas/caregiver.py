@@ -31,6 +31,7 @@ class CaregiverPatientItem(BaseModel):
     date_of_birth: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = None
+    dementia_type: Optional[str] = None
     relationship: str = "Family Caregiver"
     preferred_language: Optional[str] = "en"
     status: str = "Active"

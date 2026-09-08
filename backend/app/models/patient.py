@@ -20,6 +20,9 @@ class Patient(Base):
     
     date_of_birth = Column(Date, nullable=False)
     gender = Column(String, nullable=False)
+    age = Column(Integer, nullable=True)
+    dementia_type = Column(String, nullable=True)
+    is_onboarded = Column(Boolean, default=False, nullable=False)
     education_level = Column(String, default="none")
     primary_language = Column(String, default="hi")
     emergency_contact_name = Column(String, nullable=False)

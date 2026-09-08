@@ -4,6 +4,8 @@ import '../auth/services/auth_service.dart';
 import '../reminders/reminder_model.dart';
 import '../reminders/reminder_service.dart';
 import 'services/care_circle_service.dart';
+import 'services/patient_service.dart';
+import 'patient_onboarding_screen.dart';
 import 'widgets/reminder_card.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/daily_games_screen.dart';
@@ -29,12 +31,40 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   CareCircleData? _careCircle;
   bool _isLoadingCareCircle = false;
 
+  final _patientService = PatientService();
+
   @override
   void initState() {
     super.initState();
     _loadUserName();
     _loadReminders();
     _loadCareCircle();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkOnboardingState();
+    });
+  }
+
+  Future<void> _checkOnboardingState() async {
+    final isLocal = await _patientService.isLocallyOnboarded();
+    if (isLocal) return;
+
+    final profile = await _patientService.fetchProfile();
+    if (profile != null && !profile.isOnboarded && mounted) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => PatientOnboardingScreen(
+          isModal: true,
+          onCompleted: () {
+            Navigator.pop(ctx);
+            setState(() {});
+          },
+        ),
+      );
+    }
   }
 
   Future<void> _loadUserName() async {

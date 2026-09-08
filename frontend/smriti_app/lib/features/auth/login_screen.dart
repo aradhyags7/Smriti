@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import 'services/auth_service.dart';
+import 'services/google_auth_service.dart';
+import 'widgets/google_sign_in_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +15,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
+  final _googleAuthService = GoogleAuthService();
+  bool _isGoogleLoading = false;
   String _role = 'patient';
   bool _isLoading = false;
 
@@ -30,6 +34,42 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+    Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+
+    final result = await _googleAuthService.continueWithGoogle(role: _role);
+
+    if (!mounted) return;
+    setState(() => _isGoogleLoading = false);
+
+    if (result['cancelled'] == true) {
+      return;
+    }
+
+    if (result['success'] == true) {
+      final userRole = (result['data']?['role'] ?? _role).toString().toLowerCase();
+      if (userRole == 'caregiver') {
+        Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
+      } else if (userRole == 'asha') {
+        Navigator.pushReplacementNamed(context, '/asha-dashboard');
+      } else {
+        final isOnboarded = result['data']?['is_onboarded'] == true;
+        if (isOnboarded) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          Navigator.pushReplacementNamed(context, '/patient-onboarding');
+        }
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['error'] ?? 'Google Sign-In failed'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -73,7 +113,12 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (userRole == 'asha') {
         Navigator.pushReplacementNamed(context, '/asha-dashboard');
       } else {
-        Navigator.pushReplacementNamed(context, '/home');
+        final isOnboarded = result['data']?['is_onboarded'] == true;
+        if (isOnboarded) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          Navigator.pushReplacementNamed(context, '/patient-onboarding');
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -164,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+                onPressed: (_isLoading || _isGoogleLoading) ? null : _handleLogin,
                 child: _isLoading
                     ? const SizedBox(
                         width: 20,
@@ -175,6 +220,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       )
                     : const Text('Sign In'),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              GoogleSignInButton(
+                isLoading: _isGoogleLoading,
+                onPressed: (_isLoading || _isGoogleLoading) ? null : _handleGoogleSignIn,
               ),
               const SizedBox(height: 24),
               Row(

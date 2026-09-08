@@ -4,6 +4,7 @@ import 'features/onboarding/launch_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/signup_screen.dart';
 import 'features/patient/patient_home_screen.dart';
+import 'features/patient/patient_onboarding_screen.dart';
 import 'features/onboarding/cognitive_health_check_screen.dart';
 import 'features/caregiver/caregiver_dashboard_screen.dart';
 import 'features/asha/asha_dashboard_screen.dart';
@@ -29,6 +30,7 @@ class SmritiApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const PatientHomeScreen(),
+        '/patient-onboarding': (context) => const PatientOnboardingScreen(),
         '/health-check': (context) => const CognitiveHealthCheckScreen(),
         '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
         '/asha-dashboard': (context) => const AshaDashboardScreen(),

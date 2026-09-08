@@ -6,10 +6,50 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models import User
-from app.schemas.patient import PatientCreate, PatientResponse
-from app.services.patient_service import create_patient, get_patient
+from app.schemas.patient import (
+    PatientCreate,
+    PatientResponse,
+    PatientOnboardingRequest,
+    PatientProfileResponse,
+)
+from app.services.patient_service import (
+    create_patient,
+    get_patient,
+    get_or_create_patient_profile,
+    build_patient_profile_response,
+    complete_patient_onboarding,
+)
 
 router = APIRouter()
+
+
+@router.get(
+    "/me",
+    response_model=PatientProfileResponse,
+    summary="Get current patient profile",
+)
+def get_current_patient_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Retrieve the profile and onboarding state of the currently authenticated patient."""
+    patient = get_or_create_patient_profile(db=db, user=current_user)
+    return build_patient_profile_response(user=current_user, patient=patient)
+
+
+@router.post(
+    "/onboarding",
+    response_model=PatientProfileResponse,
+    summary="Complete patient one-time onboarding",
+)
+def submit_patient_onboarding(
+    data: PatientOnboardingRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Save patient's age, gender, and dementia diagnosis. Called once during initial signup."""
+    patient = complete_patient_onboarding(db=db, user=current_user, data=data)
+    return build_patient_profile_response(user=current_user, patient=patient)
 
 
 @router.post(
@@ -24,7 +64,6 @@ def create_new_patient(
     current_user: User = Depends(get_current_user),
 ):
     """Register a new patient profile (requires authentication)."""
-    # If user_id is not explicitly provided and user is a patient, link to current user
     return create_patient(db=db, data=patient_data)
 
 

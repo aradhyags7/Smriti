@@ -169,6 +169,10 @@ class TokenResponse(BaseModel):
         default=None,
         description="Email address of the authenticated user.",
     )
+    is_onboarded: Optional[bool] = Field(
+        default=None,
+        description="Whether first-time onboarding has been completed for patient.",
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -233,3 +237,29 @@ class ForgotPinRequest(BaseModel):
     )
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Google OAuth
+# ---------------------------------------------------------------------------
+
+class GoogleLoginRequest(BaseModel):
+    """Payload for Google OAuth ID token verification."""
+    id_token: str = Field(
+        ...,
+        min_length=10,
+        description="Google ID Token issued by Google Sign-In SDK.",
+    )
+    role: Optional[UserRole] = Field(
+        default=UserRole.PATIENT,
+        description="Requested account role if creating a new user (PATIENT, CAREGIVER, or ASHA).",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_public_role(self):
+        allowed = {UserRole.PATIENT, UserRole.CAREGIVER, UserRole.ASHA}
+        if self.role and self.role not in allowed:
+            raise ValueError("Role must be one of: patient, caregiver, asha")
+        return self

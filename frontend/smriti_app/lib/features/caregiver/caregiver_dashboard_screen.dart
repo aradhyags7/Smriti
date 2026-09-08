@@ -1538,9 +1538,32 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '${patient.age} yrs • Gender: ${patient.gender.toUpperCase()}',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    Row(
+                      children: [
+                        Text(
+                          '${patient.age} yrs • Gender: ${patient.gender.toUpperCase()}',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        ),
+                        if (patient.dementiaType != null && patient.dementiaType!.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1EFE3),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFD4CEB8)),
+                            ),
+                            child: Text(
+                              patient.dementiaType!,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF23654D),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -1555,6 +1578,30 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
+              if (patient.dementiaType != null && patient.dementiaType!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5EE),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF23654D).withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.psychology, color: Color(0xFF23654D), size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Diagnosis: ${patient.dementiaType}',
+                        style: const TextStyle(
+                          color: Color(0xFF23654D),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               // Risk level badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

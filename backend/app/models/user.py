@@ -17,7 +17,9 @@ class User(Base):
     full_name = Column(String, nullable=False)
     phone_number = Column(String, unique=True, index=True, nullable=True)
     email = Column(String, unique=True, index=True, nullable=True)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=True)  # Nullable for Google-authenticated accounts
+    auth_provider = Column(String, nullable=False, default="LOCAL")  # LOCAL or GOOGLE
+    google_subject = Column(String, unique=True, index=True, nullable=True)  # Google "sub" identifier
     role = Column(String, nullable=False, default="patient")  # patient, caregiver, asha
     preferred_language = Column(String, default="en")
     is_active = Column(Boolean, default=True)

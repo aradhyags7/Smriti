@@ -42,8 +42,11 @@ class ApiEndpoints {
   static String get rootHealth => '$baseUrl/';
   static String get signup => '$baseUrl/api/v1/auth/signup';
   static String get login => '$baseUrl/api/v1/auth/login';
+  static String get googleLogin => '$baseUrl/api/v1/auth/google';
   static String get me => '$baseUrl/api/v1/auth/me';
   static String get patients => '$baseUrl/api/v1/patients';
+  static String get patientMe => '$baseUrl/api/v1/patients/me';
+  static String get patientOnboarding => '$baseUrl/api/v1/patients/onboarding';
   static String get games => '$baseUrl/api/v1/games';
   static String get sync => '$baseUrl/api/v1/sync';
   

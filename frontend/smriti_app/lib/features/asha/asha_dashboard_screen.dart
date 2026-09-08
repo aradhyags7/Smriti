@@ -750,9 +750,40 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '${patient.age} yrs • ${patient.village}, ${patient.district}',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${patient.age} yrs • Gender: ${patient.gender.toUpperCase()} • ${patient.village}',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        ),
+                        if (patient.dementiaType != null && patient.dementiaType!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5EE),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF23654D).withValues(alpha: 0.25)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.psychology, size: 12, color: Color(0xFF23654D)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  patient.dementiaType!,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF23654D),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
