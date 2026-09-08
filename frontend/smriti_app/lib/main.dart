@@ -9,6 +9,7 @@ import 'features/caregiver/caregiver_dashboard_screen.dart';
 import 'features/asha/asha_dashboard_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/daily_games_screen.dart';
+import 'app/app.dart' show VoiceTestScreen;
 
 void main() {
   runApp(const SmritiApp());
@@ -34,6 +35,7 @@ class SmritiApp extends StatelessWidget {
         '/asha-dashboard': (context) => const AshaDashboardScreen(),
         '/games': (context) => const HomeScreen(),
         '/daily-games': (context) => const DailyGamesScreen(),
+        '/voice-test': (context) => const VoiceTestScreen(),
       },
     );
   }

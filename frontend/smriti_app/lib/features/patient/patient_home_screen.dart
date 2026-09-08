@@ -7,6 +7,7 @@ import 'services/care_circle_service.dart';
 import 'widgets/reminder_card.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/daily_games_screen.dart';
+import '../voice/voice_assistant_sheet.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key});
@@ -304,6 +305,18 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'voice_assistant_fab',
+        backgroundColor: const Color(0xFF23654D),
+        tooltip: 'Voice Assistant',
+        onPressed: () {
+          VoiceAssistantSheet.show(
+            context,
+            onOpenCareCircle: () => setState(() => _selectedIndex = 1),
+          );
+        },
+        child: const Icon(Icons.mic_rounded, color: Colors.white, size: 28),
+      ),
       // Custom Bottom Navigation Bar matching Image 2
       bottomNavigationBar: Container(
         color: const Color(0xFF23654D),
@@ -424,6 +437,25 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 _selectedIndex = 2;
               });
               _loadReminders();
+            },
+          ),
+          const SizedBox(height: 18),
+
+          // Card 4: 4. Voice Assistant
+          _buildActivityCard(
+            context: context,
+            iconColor: const Color(0xFFA6EBCF),
+            iconData: Icons.mic_rounded,
+            badgeColor: const Color(0xFFB4EBA3),
+            badgeText: 'Voice AI',
+            badgeIcon: Icons.record_voice_over_rounded,
+            title: '4. Voice Assistant',
+            subtitle: 'Speak to set reminders, check progress, or play games • Tap to talk',
+            onTap: () {
+              VoiceAssistantSheet.show(
+                context,
+                onOpenCareCircle: () => setState(() => _selectedIndex = 1),
+              );
             },
           ),
           const SizedBox(height: 32),

@@ -1,5 +1,5 @@
 name: smriti_app
-description: "SMRITI - AI-Powered Cognitive Care Platform (Flutter Patient App)"
+description: "SMRITI - AI-Powered Cognitive Care Platform with Offline Voice Assistance"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -11,15 +11,27 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  audioplayers: ^6.0.0
+  google_fonts: ^6.2.1
+  connectivity_plus: ^7.3.1
   sqflite: ^2.4.3
   path: ^1.9.1
   path_provider: ^2.1.6
-  http: ^1.6.0
-  connectivity_plus: ^7.3.1
-  intl: ^0.20.3
+  http: ^1.2.2
+  audioplayers: ^6.1.0
   shared_preferences: ^2.5.5
-  google_fonts: ^6.2.1
+  intl: any
+  uuid: ^4.5.1
+
+  # Voice Assistant & Speech Recognition (behind SttAdapter)
+  speech_to_text: ^7.0.0
+  permission_handler: ^11.3.1
+  # Whisper.cpp offline STT (behind WhisperSttAdapter)
+  whisper_ggml: ^2.6.0
+  record: ^7.1.1
+
+  # Reminders & Scheduled Offline Notifications
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:
@@ -31,4 +43,3 @@ flutter:
 
   assets:
     - assets/images/logo/
-
