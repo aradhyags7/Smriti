@@ -25,8 +25,8 @@ class UserBase(BaseModel):
         max_length=120,
         description="Full name of the user.",
     )
-    phone_number: str = Field(
-        ...,
+    phone_number: Optional[str] = Field(
+        default=None,
         pattern=r"^\+?[1-9]\d{6,14}$",
         description="E.164-formatted phone number (primary identifier).",
     )
@@ -52,7 +52,7 @@ class UserBase(BaseModel):
 # ---------------------------------------------------------------------------
 
 class UserUpdate(BaseModel):
-    """Partial update payload — all fields optional."""
+    """Partial update payload - all fields optional."""
     full_name: Optional[str] = Field(
         default=None,
         min_length=2,
@@ -90,8 +90,8 @@ class UserResponse(BaseModel):
         ...,
         description="Full name.",
     )
-    phone_number: str = Field(
-        ...,
+    phone_number: Optional[str] = Field(
+        default=None,
         description="Registered phone number.",
     )
     role: UserRole = Field(

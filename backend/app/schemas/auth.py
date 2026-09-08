@@ -1,16 +1,16 @@
 """
 Authentication schemas for the SMRITI platform.
 
-Covers user registration, login (PIN-based), JWT token issuance,
+Covers user registration, login (email or PIN-based), JWT token issuance,
 OTP verification, and PIN recovery flows.
-All models use Pydantic v2 conventions (ConfigDict, Field).
+All models use Pydantic v2 conventions (ConfigDict, Field, model_validator).
 """
 
 from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -29,32 +29,38 @@ class UserRole(str, Enum):
 # ---------------------------------------------------------------------------
 
 class UserSignupRequest(BaseModel):
-    """Payload for new user registration."""
+    """Payload for new user registration (supports email and/or phone)."""
     full_name: str = Field(
         ...,
         min_length=2,
         max_length=120,
         description="Full legal name of the user.",
     )
-    phone_number: str = Field(
-        ...,
+    email: Optional[EmailStr] = Field(
+        default=None,
+        description="Email address for authentication and notifications.",
+    )
+    password: Optional[str] = Field(
+        default=None,
+        min_length=4,
+        max_length=128,
+        description="Password for authentication.",
+    )
+    phone_number: Optional[str] = Field(
+        default=None,
         pattern=r"^\+?[1-9]\d{6,14}$",
-        description="E.164-formatted phone number used as primary identifier.",
+        description="E.164-formatted phone number used as identifier.",
     )
     role: UserRole = Field(
         ...,
         description="Role assigned at registration (patient, caregiver, asha).",
     )
-    pin: str = Field(
-        ...,
+    pin: Optional[str] = Field(
+        default=None,
         min_length=4,
         max_length=6,
         pattern=r"^\d{4,6}$",
-        description="Numeric PIN (4–6 digits) used for authentication.",
-    )
-    email: Optional[EmailStr] = Field(
-        default=None,
-        description="Optional email address for notifications.",
+        description="Numeric PIN (4-6 digits) used for authentication.",
     )
     preferred_language: str = Field(
         default="en",
@@ -67,14 +73,23 @@ class UserSignupRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "full_name": "Tanishka Sawant",
+                "email": "tanishka@example.com",
+                "password": "password123",
                 "phone_number": "+919876543210",
                 "role": "caregiver",
                 "pin": "1234",
-                "email": "tanishka@example.com",
                 "preferred_language": "en",
             }
         },
     )
+
+    @model_validator(mode="after")
+    def validate_identifier_and_secret(self):
+        if not self.email and not self.phone_number:
+            raise ValueError("Either email or phone_number must be provided")
+        if not self.password and not self.pin:
+            raise ValueError("Either password or pin must be provided")
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -82,14 +97,22 @@ class UserSignupRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 class UserLoginRequest(BaseModel):
-    """PIN-based login request."""
-    phone_number: str = Field(
-        ...,
+    """Email or PIN-based login request."""
+    email: Optional[EmailStr] = Field(
+        default=None,
+        description="Registered email address.",
+    )
+    password: Optional[str] = Field(
+        default=None,
+        description="Password for email authentication.",
+    )
+    phone_number: Optional[str] = Field(
+        default=None,
         pattern=r"^\+?[1-9]\d{6,14}$",
         description="Registered phone number.",
     )
-    pin: str = Field(
-        ...,
+    pin: Optional[str] = Field(
+        default=None,
         min_length=4,
         max_length=6,
         pattern=r"^\d{4,6}$",
@@ -97,6 +120,14 @@ class UserLoginRequest(BaseModel):
     )
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_login_fields(self):
+        if not self.email and not self.phone_number:
+            raise ValueError("Either email or phone_number must be provided for login")
+        if not self.password and not self.pin:
+            raise ValueError("Either password or pin must be provided for login")
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -129,6 +160,14 @@ class TokenResponse(BaseModel):
     role: UserRole = Field(
         ...,
         description="Role of the authenticated user.",
+    )
+    full_name: Optional[str] = Field(
+        default=None,
+        description="Full display name of the authenticated user.",
+    )
+    email: Optional[EmailStr] = Field(
+        default=None,
+        description="Email address of the authenticated user.",
     )
 
     model_config = ConfigDict(from_attributes=True)

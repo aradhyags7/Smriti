@@ -15,7 +15,7 @@ class User(Base):
 
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     full_name = Column(String, nullable=False)
-    phone_number = Column(String, unique=True, index=True, nullable=False)
+    phone_number = Column(String, unique=True, index=True, nullable=True)
     email = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String, nullable=False)
     role = Column(String, nullable=False, default="patient")  # patient, caregiver, asha
