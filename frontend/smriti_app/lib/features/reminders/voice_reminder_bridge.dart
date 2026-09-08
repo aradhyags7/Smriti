@@ -287,13 +287,28 @@ class VoiceReminderBridge {
     // 5. Extract Title by removing command boilerplate
     final title = _extractTitle(working);
 
-    final isTitleMissing = title == null || title.isEmpty;
+    String? resolvedTitle = title;
+    if (resolvedTitle == null || resolvedTitle.isEmpty) {
+      final lower = rawTranscript.toLowerCase();
+      if (lower.contains('medicin') || lower.contains('pill') || lower.contains('tablet') ||
+          lower.contains('दवाई') || lower.contains('दवा') || lower.contains('ঔষধ') || lower.contains('ওষুধ')) {
+        resolvedTitle = 'Take medicines';
+      } else if (lower.contains('water') || lower.contains('पानी') || lower.contains('জল')) {
+        resolvedTitle = 'Drink water';
+      } else if (lower.contains('doctor') || lower.contains('डॉक्टर') || lower.contains('ডাক্তার') || lower.contains('hospital') || lower.contains('clinic')) {
+        resolvedTitle = 'Doctor appointment';
+      } else if (lower.contains('walk') || lower.contains('टहलना') || lower.contains('হাঁটা')) {
+        resolvedTitle = 'Daily walk';
+      }
+    }
+
+    final isTitleMissing = resolvedTitle == null || resolvedTitle.isEmpty;
     final isTimeMissing = scheduledAt == null;
     final hasEnoughInformation = !isTitleMissing && !isTimeMissing;
 
     return VoiceReminderDraft(
       rawTranscript: rawTranscript,
-      title: title,
+      title: resolvedTitle,
       scheduledAt: scheduledAt,
       recurrence: recurrence,
       hasEnoughInformation: hasEnoughInformation,
@@ -340,6 +355,7 @@ class VoiceReminderBridge {
       'please remind me about',
       'please remind me',
       'can you remind me to',
+      'can you remind me for',
       'can you remind me',
       'schedule a reminder for',
       'schedule a reminder to',
@@ -347,14 +363,29 @@ class VoiceReminderBridge {
       'schedule reminder for',
       'schedule reminder to',
       'schedule reminder',
+      'set my reminder for',
+      'set my reminder to',
+      'set my reminder about',
+      'set my reminder',
+      'set my remainder for',
+      'set my remainder to',
+      'set my remainder about',
+      'set my remainder',
       'set a reminder for',
       'set a reminder to',
       'set a reminder about',
       'set a reminder on',
       'set a reminder',
+      'set a remainder for',
+      'set a remainder to',
+      'set a remainder about',
+      'set a remainder',
       'set reminder for',
       'set reminder to',
       'set reminder',
+      'set remainder for',
+      'set remainder to',
+      'set remainder',
       'create a reminder for',
       'create a reminder to',
       'create a reminder',
@@ -378,6 +409,15 @@ class VoiceReminderBridge {
       'reminder for',
       'reminder to',
       'reminder',
+      'remainder for',
+      'remainder to',
+      'remainder',
+      'set medicine reminder for',
+      'set medicine reminder',
+      'medicine reminder for',
+      'medicine reminder',
+      'medicines reminder for',
+      'medicines reminder',
     ];
 
     for (final prefix in englishPrefixes) {

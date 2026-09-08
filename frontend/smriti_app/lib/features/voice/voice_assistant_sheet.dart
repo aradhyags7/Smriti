@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../screens/daily_games_screen.dart';
+import '../../screens/home_screen.dart';
+import '../../screens/pulse_trainer_screen.dart';
+import '../cognitive/calibration/screens/daily_calibration_screen.dart';
+import '../cognitive/spatial_memory/screens/wayfinder_home_screen.dart';
+import '../cognitive/working_memory/screens/sequence_home_screen.dart';
 import '../reminders/reminder_notification_service.dart';
 import '../reminders/reminder_service.dart';
 import '../reminders/reminders_screen.dart';
@@ -202,27 +207,71 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
 
     // Intent execution handlers
     controller.onStartGame = () => _handleStartGame();
+    controller.onStartGameWithResult = (result) => _handleStartGame(result);
     controller.onOpenMemory = () => _handleOpenMemory();
     controller.onShowProgress = () => _handleShowProgress();
     controller.onCallCaregiver = () => _handleCallCaregiver();
     controller.onCheckToday = () => _handleCheckToday();
     controller.onSetReminderWithResult = (result) => _handleSetReminder(result);
+    controller.onUnknownIntent = (result) => _handleUnknownIntent(result);
   }
 
-  Future<void> _handleStartGame() async {
+  Future<void> _handleStartGame([VoiceIntentResult? result]) async {
     if (!mounted) return;
+    final gameType = result?.parameters?['gameType'] as String? ?? 'daily';
+
+    String feedback;
+    Widget targetScreen;
+
+    switch (gameType) {
+      case 'pulse':
+        feedback = 'Opening Pulse Trainer...';
+        targetScreen = const PulseTrainerScreen();
+        break;
+      case 'wayfinder':
+        feedback = 'Opening Wayfinder Memory Walk...';
+        targetScreen = const WayfinderHomeScreen();
+        break;
+      case 'sequence':
+        feedback = 'Opening Sequence Check...';
+        targetScreen = const SequenceHomeScreen();
+        break;
+      case 'calibration':
+        feedback = 'Opening Daily Calibration...';
+        targetScreen = const DailyCalibrationScreen();
+        break;
+      case 'more':
+        feedback = 'Opening Smriti Arcade...';
+        targetScreen = const HomeScreen();
+        break;
+      case 'daily':
+      default:
+        feedback = 'Opening Daily Games...';
+        targetScreen = const DailyGamesScreen();
+        break;
+    }
+
     setState(() {
       _recognizedIntent = 'START_GAME';
-      _actionFeedback = 'Opening Memory Games...';
+      _actionFeedback = feedback;
     });
 
     await Future.delayed(const Duration(milliseconds: 600));
     if (mounted) {
       Navigator.of(context).pop();
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const DailyGamesScreen()),
+        MaterialPageRoute(builder: (_) => targetScreen),
       );
     }
+  }
+
+  void _handleUnknownIntent(VoiceIntentResult result) {
+    if (!mounted) return;
+    setState(() {
+      _recognizedIntent = 'UNKNOWN';
+      _actionFeedback =
+          'Could not understand command. Tap a suggestion below or try: "start game", "call caregiver", or "remind me to..."';
+    });
   }
 
   Future<void> _handleOpenMemory() async {
@@ -338,11 +387,15 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
 
     if (_state == VoiceControllerState.listening) {
       await ctrl.stopListening();
+      if (mounted && _transcript.trim().isNotEmpty && _recognizedIntent == null) {
+        _triggerCommand(_transcript.trim());
+      }
     } else {
       setState(() {
         _transcript = '';
         _actionFeedback = null;
         _errorMessage = null;
+        _recognizedIntent = null;
       });
       await ctrl.startListening();
     }
@@ -712,8 +765,32 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
                 ),
                 const SizedBox(width: 8),
                 _buildQuickChip(
+                  icon: Icons.speed_rounded,
+                  label: 'Pulse Trainer',
+                  command: 'open pulse trainer',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
+                  icon: Icons.explore_rounded,
+                  label: 'Wayfinder',
+                  command: 'open wayfinder',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
+                  icon: Icons.grid_view_rounded,
+                  label: 'Sequence Check',
+                  command: 'open sequence check',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
+                  icon: Icons.medication_rounded,
+                  label: 'Medicine Remainder',
+                  command: 'set my remainder for medicines at 8 pm',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
                   icon: Icons.alarm_rounded,
-                  label: 'Remind at 8 PM',
+                  label: 'Water at 8 PM',
                   command: 'remind me at 8 pm to drink water',
                 ),
                 const SizedBox(width: 8),

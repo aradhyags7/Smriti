@@ -164,6 +164,9 @@ class VoiceController {
   /// Called when [VoiceIntent.startGame] is recognized.
   FutureOr<void> Function()? onStartGame;
 
+  /// Called when [VoiceIntent.startGame] is recognized with the full [VoiceIntentResult].
+  FutureOr<void> Function(VoiceIntentResult result)? onStartGameWithResult;
+
   /// Called when [VoiceIntent.openMemory] is recognized.
   FutureOr<void> Function()? onOpenMemory;
 
@@ -187,6 +190,9 @@ class VoiceController {
   // --------------------------------------------------------------------------
   // Status / Error callbacks
   // --------------------------------------------------------------------------
+
+  /// Called when [VoiceIntent.unknown] is recognized with the full [VoiceIntentResult].
+  FutureOr<void> Function(VoiceIntentResult result)? onUnknownIntent;
 
   /// Invoked whenever [state] changes.
   ///
@@ -221,6 +227,7 @@ class VoiceController {
   bool _isStopping = false;
   bool _disposed = false;
   String? _lastDispatchedTranscript;
+  String _accumulatedTranscript = '';
 
   /// Whether the controller is currently in a listening session.
   bool get isListening => _isListening;
@@ -235,12 +242,14 @@ class VoiceController {
     required this.engine,
     this.languageCode = 'en',
     this.onStartGame,
+    this.onStartGameWithResult,
     this.onOpenMemory,
     this.onSetReminder,
     this.onSetReminderWithResult,
     this.onCallCaregiver,
     this.onCheckToday,
     this.onShowProgress,
+    this.onUnknownIntent,
     this.onStateChanged,
     this.onTranscript,
     this.onError,
@@ -352,6 +361,7 @@ class VoiceController {
 
       _isListening = true;
       _lastDispatchedTranscript = null;
+      _accumulatedTranscript = '';
       _setState(VoiceControllerState.listening);
 
       await stt.startListening(
@@ -381,8 +391,17 @@ class VoiceController {
 
     _isStopping = true;
     try {
+      final pending = _accumulatedTranscript.trim();
+      _accumulatedTranscript = '';
       await stt.stopListening();
       _isListening = false;
+
+      if (pending.isNotEmpty && pending.toLowerCase() != _lastDispatchedTranscript) {
+        _setState(VoiceControllerState.processing);
+        await _processTranscript(pending);
+        return;
+      }
+
       if (_state == VoiceControllerState.listening) {
         _setState(VoiceControllerState.idle);
       }
@@ -449,6 +468,7 @@ class VoiceController {
   /// Handles intermediate transcripts from the STT adapter.
   void _onSttResult(String transcript) {
     if (_disposed || transcript.trim().isEmpty) return;
+    _accumulatedTranscript = transcript;
     onTranscript?.call(transcript);
     _setState(VoiceControllerState.processing);
     _processTranscript(transcript);
@@ -456,10 +476,12 @@ class VoiceController {
 
   /// Handles the final transcript (e.g. from Whisper session.stop()).
   void _onSttFinalResult(String transcript) {
-    if (_disposed || transcript.trim().isEmpty) return;
-    onTranscript?.call(transcript);
+    if (_disposed) return;
+    final text = transcript.trim().isNotEmpty ? transcript : _accumulatedTranscript;
+    if (text.trim().isEmpty) return;
+    onTranscript?.call(text);
     _isListening = false;
-    final normalized = transcript.trim().toLowerCase();
+    final normalized = text.trim().toLowerCase();
     if (_lastDispatchedTranscript != null &&
         _lastDispatchedTranscript == normalized) {
       if (_state == VoiceControllerState.listening) {
@@ -468,7 +490,7 @@ class VoiceController {
       return;
     }
     _setState(VoiceControllerState.processing);
-    _processTranscript(transcript);
+    _processTranscript(text);
   }
 
   /// Handles STT-level errors.
@@ -496,7 +518,8 @@ class VoiceController {
       dynamic action;
       switch (result.intent) {
         case VoiceIntent.startGame:
-          action = onStartGame?.call();
+          onStartGame?.call();
+          action = onStartGameWithResult?.call(result);
         case VoiceIntent.openMemory:
           action = onOpenMemory?.call();
         case VoiceIntent.setReminder:
@@ -509,7 +532,7 @@ class VoiceController {
         case VoiceIntent.showProgress:
           action = onShowProgress?.call();
         case VoiceIntent.unknown:
-          // No action callback for unknown; TTS feedback is the only response.
+          action = onUnknownIntent?.call(result);
           break;
       }
       if (action is Future) {
