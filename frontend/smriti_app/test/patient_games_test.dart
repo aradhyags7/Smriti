@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smriti_app/features/patient/patient_home_screen.dart';
+import 'package:smriti_app/screens/home_screen.dart';
 
 void main() {
-  testWidgets('PatientHomeScreen displays Quick Play games and Games tab',
+  testWidgets('PatientHomeScreen displays 3 cards and navigates to Games',
       (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: PatientHomeScreen()));
     await tester.pump();
 
-    // Verify Home tab content
-    expect(find.text('Good Morning, Patient'), findsOneWidget);
+    // Verify 3 cards
     expect(find.text('1. Daily Games'), findsOneWidget);
-    expect(find.text('Quick Play'), findsOneWidget);
-    expect(find.text('Pulse Trainer'), findsOneWidget);
-    expect(find.text('Wayfinder'), findsOneWidget);
-    expect(find.text('Sequence Check'), findsOneWidget);
+    expect(find.text('2. More Games'), findsOneWidget);
+    expect(find.text('3. Reminders'), findsOneWidget);
 
-    // Tap on the Games tab in bottom navigation bar
-    expect(find.text('Games'), findsOneWidget);
-    await tester.tap(find.text('Games'));
-    await tester.pump();
+    // Verify Bottom Navigation Bar
+    expect(find.text('ASHA Worker'), findsOneWidget);
+    expect(find.text('Reminders'), findsWidgets);
 
-    // Verify Games tab content
-    expect(find.text('Memory & Focus'), findsOneWidget);
-    expect(find.text('Daily Calibration Test'), findsOneWidget);
-    expect(find.text('Clinical Game Library'), findsOneWidget);
+    // Tap on Card 1: 1. Daily Games -> Navigates to HomeScreen
+    await tester.ensureVisible(find.text('1. Daily Games'));
+    await tester.tap(find.text('1. Daily Games'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomeScreen), findsOneWidget);
   });
 }
