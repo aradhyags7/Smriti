@@ -2,10 +2,15 @@
 
     <!-- Microphone required for Whisper.cpp offline speech recognition -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <!-- Internet required ONLY for one-time Whisper model download (first-run) -->
+    <!-- Internet & network required for remote backend synchronization -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Notifications & Alarms for reminders -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
+        android:usesCleartextTraffic="true"
         android:label="smriti_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

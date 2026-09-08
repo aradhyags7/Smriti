@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_endpoints.dart';
 import 'reminder_model.dart';
 
 /// Contract for offline local reminder persistence in Smriti.
@@ -49,16 +51,17 @@ abstract class IReminderService {
   Future<void> clearAll();
 }
 
-/// Offline-first local persistence service for reminders using [SharedPreferences].
+/// Hybrid local-offline and cloud-sync persistence service for reminders.
 ///
-/// Designed to be fully isolated from UI widgets, BuildContext, network APIs,
-/// and notification schedulers. Safely handles missing, empty, or corrupted storage.
+/// Implements [IReminderService] using [SharedPreferences] for guaranteed offline
+/// alarm notifications, while providing [ApiClient] hooks for the remote backend.
 class ReminderService implements IReminderService {
   /// SharedPreferences key for storing serialized reminders.
   static const String storageKey = 'smriti_offline_reminders_v1';
 
   final SharedPreferences? _injectedPrefs;
   final Future<SharedPreferences> Function()? _prefsProvider;
+  final ApiClient _apiClient = ApiClient();
 
   SharedPreferences? _prefs;
   bool _isInitialized = false;
@@ -97,12 +100,10 @@ class ReminderService implements IReminderService {
     return _prefs;
   }
 
-  /// Internal helper to load and parse reminders safely from storage.
+  /// Internal helper to load and parse the raw JSON map from storage.
   Future<Map<String, ReminderModel>> _loadRemindersMap() async {
     final prefs = await _getPrefs();
-    if (prefs == null) {
-      return {};
-    }
+    if (prefs == null) return {};
 
     final rawJson = prefs.getString(storageKey);
     if (rawJson == null || rawJson.trim().isEmpty) {
@@ -110,32 +111,32 @@ class ReminderService implements IReminderService {
     }
 
     try {
-      final dynamic decoded = jsonDecode(rawJson);
+      final decoded = jsonDecode(rawJson);
       if (decoded is! List) {
         debugPrint('ReminderService: Stored JSON is not a List. Discarding invalid payload.');
         return {};
       }
 
-      final Map<String, ReminderModel> map = {};
+      final Map<String, ReminderModel> result = {};
       for (final item in decoded) {
         if (item is Map<String, dynamic>) {
           try {
             final reminder = ReminderModel.fromJson(item);
-            map[reminder.id] = reminder;
+            result[reminder.id] = reminder;
           } catch (e) {
             debugPrint('ReminderService: Skipped malformed reminder item: $e');
           }
         } else if (item is Map) {
           try {
-            final converted = item.map((k, v) => MapEntry(k.toString(), v));
+            final converted = Map<String, dynamic>.from(item);
             final reminder = ReminderModel.fromJson(converted);
-            map[reminder.id] = reminder;
+            result[reminder.id] = reminder;
           } catch (e) {
             debugPrint('ReminderService: Skipped malformed reminder item: $e');
           }
         }
       }
-      return map;
+      return result;
     } catch (e) {
       debugPrint('ReminderService: Corrupted JSON data in SharedPreferences: $e. Returning empty.');
       return {};
@@ -157,6 +158,10 @@ class ReminderService implements IReminderService {
       return false;
     }
   }
+
+  // --------------------------------------------------------------------------
+  // IReminderService Implementations (Offline First)
+  // --------------------------------------------------------------------------
 
   @override
   Future<ReminderModel> createReminder(ReminderModel reminder) async {
@@ -195,11 +200,20 @@ class ReminderService implements IReminderService {
   Future<bool> deleteReminder(String id) async {
     if (id.trim().isEmpty) return false;
     final map = await _loadRemindersMap();
-    if (!map.containsKey(id.trim())) {
-      return false;
+    final removed = map.remove(id.trim());
+    if (removed != null) {
+      await _saveRemindersMap(map);
     }
-    map.remove(id.trim());
-    return await _saveRemindersMap(map);
+
+    // Also attempt remote deletion if network is reachable
+    try {
+      await _apiClient.delete(
+        ApiEndpoints.reminderDetail(id.trim()),
+        requireAuth: true,
+      );
+    } catch (_) {}
+
+    return removed != null;
   }
 
   @override
@@ -237,7 +251,16 @@ class ReminderService implements IReminderService {
     map[existing.id] = existing.copyWith(
       acknowledgedAt: acknowledgedAt ?? DateTime.now(),
     );
-    return await _saveRemindersMap(map);
+    await _saveRemindersMap(map);
+
+    try {
+      await _apiClient.patch(
+        ApiEndpoints.reminderAcknowledge(id.trim()),
+        requireAuth: true,
+      );
+    } catch (_) {}
+
+    return true;
   }
 
   @override
@@ -245,6 +268,98 @@ class ReminderService implements IReminderService {
     final prefs = await _getPrefs();
     if (prefs != null) {
       await prefs.remove(storageKey);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Remote REST API Compatibility (Patient & Caregiver Portals)
+  // --------------------------------------------------------------------------
+
+  /// Fetches reminders from the backend API. If offline or failing, falls back
+  /// to locally stored reminders converted to [ReminderItem].
+  Future<List<ReminderItem>> fetchReminders({String? patientId}) async {
+    try {
+      String url = ApiEndpoints.reminders;
+      if (patientId != null && patientId.isNotEmpty) {
+        url = '$url?patient_id=$patientId';
+      }
+      final response = await _apiClient.get(url, requireAuth: true);
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        final remoteItems =
+            list.map((item) => ReminderItem.fromJson(item as Map<String, dynamic>)).toList();
+        if (remoteItems.isNotEmpty) {
+          return remoteItems;
+        }
+      }
+    } catch (_) {}
+
+    // Fallback to local offline reminders
+    final localModels = await getAllReminders();
+    return localModels.map((m) => m.toReminderItem(patientId: patientId ?? 'default_patient')).toList();
+  }
+
+  /// Creates a reminder on the remote backend (and caches it locally).
+  Future<ReminderItem?> createRemoteReminder({
+    required String title,
+    required String scheduledTime,
+    String reminderType = 'MEDICINE',
+    String frequency = 'DAILY',
+    String? patientId,
+  }) async {
+    ReminderItem? remoteItem;
+    try {
+      final body = <String, dynamic>{
+        'title': title.trim(),
+        'scheduled_time': scheduledTime.trim(),
+        'reminder_type': reminderType,
+        'frequency': frequency,
+      };
+      if (patientId != null && patientId.isNotEmpty) {
+        body['patient_id'] = patientId;
+      }
+
+      final response = await _apiClient.post(
+        ApiEndpoints.reminders,
+        body: body,
+        requireAuth: true,
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        remoteItem = ReminderItem.fromJson(jsonDecode(response.body));
+      }
+    } catch (_) {}
+
+    // Also persist locally for offline notification triggers
+    final localModel = (remoteItem != null)
+        ? remoteItem.toReminderModel()
+        : ReminderModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: title.trim(),
+            scheduledAt: DateTime.tryParse(scheduledTime) ?? DateTime.now().add(const Duration(hours: 1)),
+            recurrence: frequency.toUpperCase() == 'DAILY'
+                ? ReminderRecurrence.daily
+                : frequency.toUpperCase() == 'WEEKLY'
+                    ? ReminderRecurrence.weekly
+                    : ReminderRecurrence.none,
+            createdAt: DateTime.now(),
+          );
+    await createReminder(localModel);
+
+    return remoteItem ?? localModel.toReminderItem(patientId: patientId ?? 'default_patient');
+  }
+
+  /// Toggles reminder acknowledgement on remote backend and local cache.
+  Future<bool> toggleAcknowledge(String reminderId) async {
+    await acknowledgeReminder(reminderId);
+    try {
+      final response = await _apiClient.patch(
+        ApiEndpoints.reminderAcknowledge(reminderId),
+        requireAuth: true,
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return true; // Local acknowledgement succeeded
     }
   }
 }
