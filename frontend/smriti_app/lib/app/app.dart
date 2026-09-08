@@ -244,9 +244,9 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
           if (widget.voiceControllerFactory != null) {
             _controller = await widget.voiceControllerFactory!();
           } else {
-            // Lazy runtime initialization: resolve model and instantiate Whisper
-            final sttAdapter = await WhisperSttAdapter.createWithResolvedModelPath();
-            final ttsAdapter = IndicTtsAdapter();
+            // Lazy runtime initialization: adaptive model/system STT and TTS
+            final sttAdapter = await createAdaptiveSttAdapter();
+            final ttsAdapter = await createAdaptiveTtsAdapter();
             final intentEngine = IntentEngine();
 
             _controller = VoiceController(

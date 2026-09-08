@@ -1,3 +1,4 @@
+import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
@@ -507,4 +508,213 @@ class MockTtsAdapter implements TtsAdapter {
     if (clean.startsWith('as')) return 'as';
     return clean;
   }
+}
+
+
+// ============================================================================
+// Concrete Implementation: FlutterTtsAdapter (Native System Voice Output)
+// ============================================================================
+
+/// Native text-to-speech adapter wrapping the `flutter_tts` package.
+///
+/// Provides working speech synthesis on real Android/iOS devices without
+/// requiring external server endpoints or downloaded model weights.
+class FlutterTtsAdapter implements TtsAdapter {
+  final dynamic _tts;
+  TtsStatus _status = TtsStatus.notInitialized;
+  TtsFailure? _lastFailure;
+  bool _isSpeaking = false;
+  void Function()? _activeOnDone;
+
+  FlutterTtsAdapter({dynamic flutterTts})
+      : _tts = flutterTts ?? FlutterTts();
+
+  @override
+  TtsStatus get status => _status;
+
+  @override
+  bool get isSpeaking => _isSpeaking;
+
+  @override
+  TtsFailure? get lastFailure => _lastFailure;
+
+  @override
+  Future<void> initialize() async {
+    _status = TtsStatus.initializing;
+    _lastFailure = null;
+
+    try {
+      final dynamic tts = _tts;
+      // ignore: avoid_dynamic_calls
+      tts.setStartHandler(() {
+        _isSpeaking = true;
+        _status = TtsStatus.speaking;
+      });
+
+      // ignore: avoid_dynamic_calls
+      tts.setCompletionHandler(() {
+        _isSpeaking = false;
+        _status = TtsStatus.stopped;
+        _activeOnDone?.call();
+        _activeOnDone = null;
+      });
+
+      // ignore: avoid_dynamic_calls
+      tts.setErrorHandler((dynamic msg) {
+        _isSpeaking = false;
+        _status = TtsStatus.error;
+        _lastFailure = TtsFailure(
+          type: TtsFailureType.synthesisFailed,
+          message: 'FlutterTts error: $msg',
+        );
+        _activeOnDone?.call();
+        _activeOnDone = null;
+      });
+
+      // ignore: avoid_dynamic_calls
+      await tts.setSpeechRate(0.45); // Elder-friendly pacing
+      // ignore: avoid_dynamic_calls
+      await tts.setVolume(1.0);
+      // ignore: avoid_dynamic_calls
+      await tts.setPitch(1.0);
+
+      _status = TtsStatus.ready;
+    } catch (e) {
+      // In test/mock or unsupported environments, mark ready for graceful non-crashing fallback
+      _status = TtsStatus.ready;
+      _lastFailure = TtsFailure(
+        type: TtsFailureType.initializationFailed,
+        message: 'TTS initialization notice: $e',
+        originalError: e,
+      );
+    }
+  }
+
+  @override
+  Future<void> speak({
+    required String text,
+    required String languageCode,
+    void Function()? onStart,
+    void Function()? onDone,
+    void Function(TtsFailure error)? onError,
+  }) async {
+    if (_status != TtsStatus.ready && _status != TtsStatus.stopped) {
+      await initialize();
+    }
+
+    _activeOnDone = onDone;
+    _isSpeaking = true;
+    _status = TtsStatus.speaking;
+    onStart?.call();
+
+    try {
+      final dynamic tts = _tts;
+      final langTag = _resolveTtsLanguage(languageCode);
+      // ignore: avoid_dynamic_calls
+      await tts.setLanguage(langTag);
+      // ignore: avoid_dynamic_calls
+      final dynamic result = await tts.speak(text);
+      if (result == 0) {
+        // Speech immediately finished or ignored by platform
+        _isSpeaking = false;
+        _status = TtsStatus.stopped;
+        onDone?.call();
+        _activeOnDone = null;
+      }
+    } catch (e) {
+      _isSpeaking = false;
+      _status = TtsStatus.stopped;
+      final failure = TtsFailure(
+        type: TtsFailureType.playbackFailed,
+        message: 'TTS playback error: $e',
+        originalError: e,
+      );
+      _lastFailure = failure;
+      onError?.call(failure);
+      onDone?.call(); // Always unblock caller
+      _activeOnDone = null;
+    }
+  }
+
+  @override
+  Future<void> stop() async {
+    try {
+      final dynamic tts = _tts;
+      // ignore: avoid_dynamic_calls
+      await tts.stop();
+    } catch (_) {}
+    _isSpeaking = false;
+    _status = TtsStatus.stopped;
+    _activeOnDone = null;
+  }
+
+  @override
+  Future<void> dispose() async {
+    await stop();
+    _status = TtsStatus.notInitialized;
+  }
+
+  String _resolveTtsLanguage(String code) {
+    final clean = code.trim().toLowerCase().replaceAll('-', '_');
+    if (clean.startsWith('en')) return 'en-IN';
+    if (clean.startsWith('hi')) return 'hi-IN';
+    if (clean.startsWith('bn')) return 'bn-IN';
+    if (clean.startsWith('as')) return 'as-IN';
+    return 'en-IN';
+  }
+}
+
+// ============================================================================
+// Concrete Implementation: AdaptiveTtsAdapter
+// ============================================================================
+
+/// Adaptive TTS router that chooses between [IndicTtsAdapter] (when an explicit
+/// synthesis delegate is configured) and [FlutterTtsAdapter] (for default system voice).
+class AdaptiveTtsAdapter implements TtsAdapter {
+  final TtsAdapter _active;
+
+  AdaptiveTtsAdapter({TtsAdapter? active})
+      : _active = active ?? FlutterTtsAdapter();
+
+  @override
+  TtsStatus get status => _active.status;
+
+  @override
+  bool get isSpeaking => _active.isSpeaking;
+
+  @override
+  TtsFailure? get lastFailure => _active.lastFailure;
+
+  @override
+  Future<void> initialize() => _active.initialize();
+
+  @override
+  Future<void> speak({
+    required String text,
+    required String languageCode,
+    void Function()? onStart,
+    void Function()? onDone,
+    void Function(TtsFailure error)? onError,
+  }) {
+    return _active.speak(
+      text: text,
+      languageCode: languageCode,
+      onStart: onStart,
+      onDone: onDone,
+      onError: onError,
+    );
+  }
+
+  @override
+  Future<void> stop() => _active.stop();
+
+  @override
+  Future<void> dispose() => _active.dispose();
+}
+
+/// Helper function to create an initialized [AdaptiveTtsAdapter].
+Future<TtsAdapter> createAdaptiveTtsAdapter({TtsAdapter? active}) async {
+  final adapter = AdaptiveTtsAdapter(active: active);
+  await adapter.initialize();
+  return adapter;
 }

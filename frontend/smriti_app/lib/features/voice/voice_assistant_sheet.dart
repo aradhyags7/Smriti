@@ -16,6 +16,8 @@ import 'voice_controller.dart';
 /// - Real-time animated microphone button
 /// - Live transcription display
 /// - Clear visual status badge (Listening, Processing, Speaking, Idle)
+/// - Quick suggestion chips for rapid intent execution
+/// - Text input option for noisy environments / devices without microphone
 /// - Direct execution of recognized intents (Daily Games, Reminders, Care Circle)
 class VoiceAssistantSheet extends StatefulWidget {
   final FutureOr<VoiceController> Function()? controllerFactory;
@@ -69,6 +71,8 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
   String? _recognizedIntent;
   String? _actionFeedback;
   String? _errorMessage;
+  bool _showTextInput = false;
+  final TextEditingController _textController = TextEditingController();
 
   late final AnimationController _pulseAnimController;
   late final Animation<double> _pulseScaleAnimation;
@@ -99,6 +103,7 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
   void dispose() {
     _pulseAnimController.dispose();
     _controller?.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
@@ -114,8 +119,8 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
       if (widget.controllerFactory != null) {
         ctrl = await widget.controllerFactory!();
       } else {
-        final stt = await WhisperSttAdapter.createWithResolvedModelPath();
-        final tts = IndicTtsAdapter();
+        final stt = await createAdaptiveSttAdapter();
+        final tts = await createAdaptiveTtsAdapter();
         ctrl = VoiceController(
           stt: stt,
           tts: tts,
@@ -124,23 +129,25 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
       }
 
       _wireController(ctrl);
-      await ctrl.initialize();
+      final ok = await ctrl.initialize();
 
       if (mounted) {
         setState(() {
           _controller = ctrl;
           _isInitializing = false;
-          _statusText = 'Listening for your command...';
+          _statusText = ok ? 'Listening for your command...' : 'Tap the microphone or a suggestion';
         });
-        // Auto-start listening on sheet open for elder convenience
-        await ctrl.startListening();
+        if (ok) {
+          // Auto-start listening on sheet open for elder convenience
+          await ctrl.startListening();
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isInitializing = false;
-          _errorMessage = 'Could not start microphone: $e';
-          _statusText = 'Voice Assistant unavailable';
+          _errorMessage = 'Microphone notice: $e';
+          _statusText = 'Tap a suggestion or type below';
         });
       }
     }
@@ -183,6 +190,10 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
 
     controller.onError = (error) {
       if (!mounted) return;
+      // Do not overwrite successful action feedback if error is just best-effort TTS
+      if (error.type == VoiceControllerErrorType.ttsOperationFailed) {
+        return;
+      }
       setState(() {
         _errorMessage = error.message;
         _statusText = 'Error';
@@ -191,6 +202,7 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
 
     // Intent execution handlers
     controller.onStartGame = () => _handleStartGame();
+    controller.onOpenMemory = () => _handleOpenMemory();
     controller.onShowProgress = () => _handleShowProgress();
     controller.onCallCaregiver = () => _handleCallCaregiver();
     controller.onCheckToday = () => _handleCheckToday();
@@ -209,6 +221,25 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
       Navigator.of(context).pop();
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const DailyGamesScreen()),
+      );
+    }
+  }
+
+  Future<void> _handleOpenMemory() async {
+    if (!mounted) return;
+    setState(() {
+      _recognizedIntent = 'OPEN_MEMORY';
+      _actionFeedback = 'Opening Memory Vault...';
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Memory Vault: Your family photos and voice memories are saved.'),
+          backgroundColor: Color(0xFF23654D),
+          duration: Duration(seconds: 3),
+        ),
       );
     }
   }
@@ -249,7 +280,7 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
     if (!mounted) return;
     setState(() {
       _recognizedIntent = 'CHECK_TODAY';
-      _actionFeedback = 'Checking today\'s activities...';
+      _actionFeedback = "Checking today's activities & reminders...";
     });
   }
 
@@ -317,6 +348,17 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
     }
   }
 
+  void _triggerCommand(String text) {
+    final ctrl = _controller;
+    if (ctrl == null) return;
+    setState(() {
+      _transcript = text;
+      _actionFeedback = null;
+      _errorMessage = null;
+    });
+    ctrl.processTranscript(text);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isListening = _state == VoiceControllerState.listening;
@@ -350,12 +392,12 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
               width: 44,
               height: 5,
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
-                borderRadius: BorderRadius.circular(3),
+                color: const Color(0xFFD6D0BE),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Header Row
           Row(
@@ -367,12 +409,12 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF23654D).withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
+                      color: const Color(0xFFA6EBCF),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.record_voice_over_rounded,
-                      color: Color(0xFF23654D),
+                      color: Color(0xFF1F4D36),
                       size: 22,
                     ),
                   ),
@@ -387,14 +429,30 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
                   ),
                 ],
               ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, color: Color(0xFF5A7264)),
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: 'Close Assistant',
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      _showTextInput ? Icons.mic_rounded : Icons.keyboard_rounded,
+                      color: const Color(0xFF5A7264),
+                    ),
+                    tooltip: _showTextInput ? 'Switch to Mic' : 'Type Command',
+                    onPressed: () {
+                      setState(() {
+                        _showTextInput = !_showTextInput;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Color(0xFF5A7264)),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close Assistant',
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Status Badge
           Container(
@@ -437,13 +495,13 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Transcript Card
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            constraints: const BoxConstraints(minHeight: 80),
+            padding: const EdgeInsets.all(16),
+            constraints: const BoxConstraints(minHeight: 72),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -465,7 +523,7 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
                 Text(
                   _transcript.isNotEmpty
                       ? _transcript
-                      : 'Say: "Start the game" • "Show my progress" • "Remind me to drink water"',
+                      : 'Say: "Start game" • "Show my progress" • "Remind me to drink water"',
                   key: const Key('sheet_transcript_text'),
                   style: TextStyle(
                     fontSize: _transcript.isNotEmpty ? 17 : 14,
@@ -504,12 +562,14 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
                       const Icon(Icons.check_circle_rounded,
                           size: 16, color: Color(0xFF23654D)),
                       const SizedBox(width: 6),
-                      Text(
-                        _actionFeedback!,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF23654D),
+                      Expanded(
+                        child: Text(
+                          _actionFeedback!,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF23654D),
+                          ),
                         ),
                       ),
                     ],
@@ -538,53 +598,169 @@ class _VoiceAssistantSheetState extends State<VoiceAssistantSheet>
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Central Pulsing Microphone Action Button
-          Center(
-            child: ScaleTransition(
-              scale: isListening ? _pulseScaleAnimation : const AlwaysStoppedAnimation(1.0),
-              child: GestureDetector(
-                onTap: _toggleListening,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isListening
-                        ? Colors.redAccent
-                        : const Color(0xFF23654D),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isListening ? Colors.redAccent : const Color(0xFF23654D))
-                            .withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        spreadRadius: isListening ? 4 : 1,
-                        offset: const Offset(0, 4),
+          // Central Mic Button OR Text Input Row
+          if (_showTextInput) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFDDD7C5)),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 14),
+                  const Icon(Icons.keyboard_voice_rounded, color: Color(0xFF23654D), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      decoration: const InputDecoration(
+                        hintText: 'Type: "start game", "call caregiver"...',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
-                    ],
+                      onSubmitted: (val) {
+                        if (val.trim().isNotEmpty) {
+                          _triggerCommand(val.trim());
+                          _textController.clear();
+                        }
+                      },
+                    ),
                   ),
-                  child: Icon(
-                    isListening ? Icons.mic : Icons.mic_none_rounded,
-                    color: Colors.white,
-                    size: 38,
-                    key: const Key('sheet_mic_icon'),
+                  IconButton(
+                    icon: const Icon(Icons.send_rounded, color: Color(0xFF23654D)),
+                    onPressed: () {
+                      if (_textController.text.trim().isNotEmpty) {
+                        _triggerCommand(_textController.text.trim());
+                        _textController.clear();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Center(
+              child: ScaleTransition(
+                scale: isListening ? _pulseScaleAnimation : const AlwaysStoppedAnimation(1.0),
+                child: GestureDetector(
+                  onTap: _toggleListening,
+                  child: Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isListening
+                          ? Colors.redAccent
+                          : const Color(0xFF23654D),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isListening ? Colors.redAccent : const Color(0xFF23654D))
+                              .withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          spreadRadius: isListening ? 4 : 1,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      isListening ? Icons.mic : Icons.mic_none_rounded,
+                      color: Colors.white,
+                      size: 36,
+                      key: const Key('sheet_mic_icon'),
+                    ),
                   ),
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              isListening ? 'Tap to finish' : 'Tap to speak',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF5A7264),
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+
+          // Quick Suggestion Chips
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'QUICK VOICE COMMANDS:',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5A7264),
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            isListening ? 'Tap to finish' : 'Tap to speak',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF5A7264),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildQuickChip(
+                  icon: Icons.extension_rounded,
+                  label: 'Start Games',
+                  command: 'start game',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
+                  icon: Icons.alarm_rounded,
+                  label: 'Remind at 8 PM',
+                  command: 'remind me at 8 pm to drink water',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
+                  icon: Icons.support_agent_rounded,
+                  label: 'Call Caregiver',
+                  command: 'call caregiver',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
+                  icon: Icons.calendar_today_rounded,
+                  label: "Today's Routine",
+                  command: 'check today',
+                ),
+                const SizedBox(width: 8),
+                _buildQuickChip(
+                  icon: Icons.trending_up_rounded,
+                  label: 'My Progress',
+                  command: 'show progress',
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildQuickChip({
+    required IconData icon,
+    required String label,
+    required String command,
+  }) {
+    return ActionChip(
+      avatar: Icon(icon, size: 16, color: const Color(0xFF1F4D36)),
+      label: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF1F4D36),
+        ),
+      ),
+      backgroundColor: const Color(0xFFF1EFE3),
+      side: const BorderSide(color: Color(0xFFDDD7C5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      onPressed: () => _triggerCommand(command),
     );
   }
 }

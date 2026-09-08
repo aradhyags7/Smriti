@@ -1135,3 +1135,113 @@ class WhisperSttAdapter implements SttAdapter {
     }
   }
 }
+
+
+// ============================================================================
+// Concrete Implementation: AdaptiveSttAdapter (Automatic Model / System Routing)
+// ============================================================================
+
+/// Smart [SttAdapter] that automatically chooses the best available speech
+/// recognition backend on the current device:
+/// 1. If an offline Whisper model binary exists locally, uses [WhisperSttAdapter].
+/// 2. Otherwise, automatically falls back to [SpeechToTextAdapter] (system STT).
+class AdaptiveSttAdapter implements SttAdapter {
+  SttAdapter _activeAdapter;
+  final SttAdapter? _customWhisper;
+  final SttAdapter? _customSystem;
+
+  AdaptiveSttAdapter({
+    SttAdapter? activeAdapter,
+    this._customWhisper,
+    this._customSystem,
+  })  : _activeAdapter = activeAdapter ?? SpeechToTextAdapter();
+
+  SttAdapter get activeAdapter => _activeAdapter;
+
+  @override
+  SttStatus get status => _activeAdapter.status;
+
+  @override
+  bool get isAvailable => _activeAdapter.isAvailable;
+
+  @override
+  bool get isListening => _activeAdapter.isListening;
+
+  @override
+  SttFailure? get lastFailure => _activeAdapter.lastFailure;
+
+  @override
+  Future<bool> initialize() async {
+    // 1. Check if offline Whisper model exists and initializes
+    try {
+      if (_customWhisper != null) {
+        final ok = await _customWhisper.initialize();
+        if (ok) {
+          _activeAdapter = _customWhisper;
+          return true;
+        }
+      } else {
+        final path = await WhisperSttAdapter.resolveDefaultModelPath();
+        if (path.isNotEmpty && File(path).existsSync()) {
+          final whisper = WhisperSttAdapter(modelPath: path);
+          final ok = await whisper.initialize();
+          if (ok) {
+            _activeAdapter = whisper;
+            return true;
+          }
+        }
+      }
+    } catch (_) {
+      // Whisper model absent or failed, fall through to system engine
+    }
+
+    // 2. Fall back to standard device speech recognition (SpeechToText)
+    final systemAdapter = _customSystem ?? SpeechToTextAdapter();
+    final ok = await systemAdapter.initialize();
+    _activeAdapter = systemAdapter;
+    return ok;
+  }
+
+  @override
+  Future<void> startListening({
+    required String languageCode,
+    required void Function(String transcript) onResult,
+    void Function(SttFailure error)? onError,
+    void Function(String finalTranscript)? onFinalResult,
+  }) async {
+    return _activeAdapter.startListening(
+      languageCode: languageCode,
+      onResult: onResult,
+      onError: onError,
+      onFinalResult: onFinalResult,
+    );
+  }
+
+  @override
+  Future<void> stopListening() async {
+    return _activeAdapter.stopListening();
+  }
+
+  @override
+  Future<void> cancel() async {
+    return _activeAdapter.cancel();
+  }
+
+  @override
+  Future<void> dispose() async {
+    return _activeAdapter.dispose();
+  }
+}
+
+/// Helper function to create an initialized [AdaptiveSttAdapter].
+Future<SttAdapter> createAdaptiveSttAdapter({
+  SttAdapter? customWhisper,
+  SttAdapter? customSystem,
+}) async {
+  final adapter = AdaptiveSttAdapter(
+    customWhisper: customWhisper,
+    customSystem: customSystem,
+  );
+  await adapter.initialize();
+  return adapter;
+}

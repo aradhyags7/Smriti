@@ -33,6 +33,7 @@ dependencies:
   # Reminders & Scheduled Offline Notifications
   flutter_local_notifications: ^17.2.4
   timezone: ^0.9.4
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:

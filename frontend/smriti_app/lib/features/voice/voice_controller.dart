@@ -310,6 +310,16 @@ class VoiceController {
   ///   4. On transcript → [VoiceControllerState.processing] → recognize intent.
   ///   5. Fire intent callback.
   ///   6. Speak TTS response (best-effort).
+    /// Publicly processes a transcript string directly (e.g. from manual input or quick chips).
+  Future<void> processTranscript(String transcript) async {
+    _assertNotDisposed();
+    final trimmed = transcript.trim();
+    if (trimmed.isEmpty) return;
+    onTranscript?.call(trimmed);
+    _setState(VoiceControllerState.processing);
+    await _processTranscript(trimmed);
+  }
+
   Future<void> startListening() async {
     _assertNotDisposed();
 
