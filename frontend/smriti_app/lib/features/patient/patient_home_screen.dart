@@ -7,6 +7,7 @@ import 'services/care_circle_service.dart';
 import 'widgets/reminder_card.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/daily_games_screen.dart';
+import '../voice/voice_assistant_sheet.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key});
@@ -309,7 +310,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         backgroundColor: const Color(0xFF23654D),
         tooltip: 'Voice Assistant',
         onPressed: () {
-          Navigator.pushNamed(context, '/voice-test');
+          VoiceAssistantSheet.show(
+            context,
+            onOpenCareCircle: () => setState(() => _selectedIndex = 1),
+          );
         },
         child: const Icon(Icons.mic_rounded, color: Colors.white, size: 28),
       ),
@@ -448,7 +452,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             title: '4. Voice Assistant',
             subtitle: 'Speak to set reminders, check progress, or play games • Tap to talk',
             onTap: () {
-              Navigator.pushNamed(context, '/voice-test');
+              VoiceAssistantSheet.show(
+                context,
+                onOpenCareCircle: () => setState(() => _selectedIndex = 1),
+              );
             },
           ),
           const SizedBox(height: 32),

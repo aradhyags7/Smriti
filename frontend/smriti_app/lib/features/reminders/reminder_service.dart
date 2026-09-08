@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -163,11 +164,45 @@ class ReminderService implements IReminderService {
   // --------------------------------------------------------------------------
 
   @override
-  Future<ReminderModel> createReminder(ReminderModel reminder) async {
+  Future<ReminderModel> createReminder(ReminderModel reminder, {bool syncRemote = true}) async {
     final map = await _loadRemindersMap();
     map[reminder.id] = reminder;
     await _saveRemindersMap(map);
+    if (syncRemote) {
+      _syncToRemoteInBackground(reminder);
+    }
     return reminder;
+  }
+
+  void _syncToRemoteInBackground(ReminderModel model) {
+    unawaited(() async {
+      try {
+        final hour = model.scheduledAt.hour > 12
+            ? model.scheduledAt.hour - 12
+            : (model.scheduledAt.hour == 0 ? 12 : model.scheduledAt.hour);
+        final minute = model.scheduledAt.minute.toString().padLeft(2, '0');
+        final ampm = model.scheduledAt.hour >= 12 ? 'PM' : 'AM';
+        final timeStr = '$hour:$minute $ampm';
+
+        final body = <String, dynamic>{
+          'title': model.title.trim(),
+          'scheduled_time': timeStr,
+          'reminder_type': 'MEDICINE',
+          'frequency': model.recurrence == ReminderRecurrence.daily
+              ? 'DAILY'
+              : model.recurrence == ReminderRecurrence.weekly
+                  ? 'WEEKLY'
+                  : 'ONCE',
+        };
+        await _apiClient.post(
+          ApiEndpoints.reminders,
+          body: body,
+          requireAuth: true,
+        );
+      } catch (_) {
+        // Quiet on network/offline failures; local offline persistence is authoritative
+      }
+    }());
   }
 
   @override
@@ -343,7 +378,7 @@ class ReminderService implements IReminderService {
                     : ReminderRecurrence.none,
             createdAt: DateTime.now(),
           );
-    await createReminder(localModel);
+    await createReminder(localModel, syncRemote: false);
 
     return remoteItem ?? localModel.toReminderItem(patientId: patientId ?? 'default_patient');
   }
