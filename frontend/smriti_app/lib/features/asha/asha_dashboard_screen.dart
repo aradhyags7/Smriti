@@ -369,6 +369,7 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                           return;
                         }
 
+                        final messenger = ScaffoldMessenger.of(context);
                         Navigator.pop(ctx);
                         final success = await _ashaService.assignPatient(
                           patientId: selectedPatientId!,
@@ -377,7 +378,7 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
 
                         if (mounted) {
                           if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Patient assigned to your care roster!'),
                                 backgroundColor: Color(0xFF23654D),
@@ -385,7 +386,7 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                             );
                             _loadPatients();
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Failed to assign patient.'),
                                 backgroundColor: Colors.redAccent,
@@ -536,7 +537,7 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome, ' + _userName,
+              'Welcome, $_userName',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w800,

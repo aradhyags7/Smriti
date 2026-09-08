@@ -139,11 +139,10 @@ class CaregiverService {
   }) async {
     try {
       final headers = await _getHeaders();
-      final body = jsonEncode({
-        if (patientId != null) 'patient_id': patientId,
-        if (patientEmail != null) 'patient_email': patientEmail,
-        'relationship': relationship,
-      });
+      final Map<String, dynamic> map = {'relationship': relationship};
+      if (patientId != null) map['patient_id'] = patientId;
+      if (patientEmail != null) map['patient_email'] = patientEmail;
+      final body = jsonEncode(map);
       final response = await http.post(
         Uri.parse(ApiEndpoints.caregiverConnectPatient),
         headers: headers,

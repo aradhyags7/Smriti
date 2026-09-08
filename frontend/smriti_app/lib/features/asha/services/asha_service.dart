@@ -141,10 +141,9 @@ class AshaService {
   }) async {
     try {
       final headers = await _getHeaders();
-      final body = jsonEncode({
-        'patient_id': patientId,
-        if (villageNotes != null) 'village_notes': villageNotes,
-      });
+      final Map<String, dynamic> map = {'patient_id': patientId};
+      if (villageNotes != null) map['village_notes'] = villageNotes;
+      final body = jsonEncode(map);
       final response = await http.post(
         Uri.parse(ApiEndpoints.ashaAssignPatient),
         headers: headers,

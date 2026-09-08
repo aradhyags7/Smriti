@@ -320,7 +320,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             children: [
               const SizedBox(height: 16),
               Text(
-                'Good Morning, ' + _userName,
+                'Good Morning, $_userName',
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       color: const Color(0xFF0F5A4D),
                       fontWeight: FontWeight.w800,

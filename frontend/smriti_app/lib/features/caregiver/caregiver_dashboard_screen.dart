@@ -471,6 +471,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                           return;
                         }
 
+                        final messenger = ScaffoldMessenger.of(context);
                         Navigator.pop(ctx);
                         final success = await _caregiverService.connectPatient(
                           patientId: selectedPatientId,
@@ -480,7 +481,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
 
                         if (mounted) {
                           if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Text('Connected to loved one as $selectedRelation!'),
                                 backgroundColor: const Color(0xFF23654D),
@@ -488,7 +489,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                             );
                             _loadPatients();
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Failed to connect patient. Please verify the account.'),
                                 backgroundColor: Colors.redAccent,
@@ -780,6 +781,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                           return;
                         }
 
+                        final messenger = ScaffoldMessenger.of(context);
                         Navigator.pop(ctx);
                         final hourStr = selectedTime.hour.toString().padLeft(2, '0');
                         final minStr = selectedTime.minute.toString().padLeft(2, '0');
@@ -796,7 +798,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                           setState(() {
                             _reminders.insert(0, created);
                           });
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Reminder created successfully!'),
                               backgroundColor: Color(0xFF23654D),
@@ -946,7 +948,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome, ' + _userName,
+              'Welcome, $_userName',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w800,
