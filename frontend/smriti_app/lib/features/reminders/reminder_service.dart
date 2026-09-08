@@ -68,9 +68,8 @@ class ReminderService implements IReminderService {
 
   ReminderService({
     SharedPreferences? prefs,
-    Future<SharedPreferences> Function()? prefsProvider,
-  })  : _injectedPrefs = prefs,
-        _prefsProvider = prefsProvider;
+    this._prefsProvider,
+  })  : _injectedPrefs = prefs;
 
   /// Ensures the service and underlying preferences are loaded.
   @override

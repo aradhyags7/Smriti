@@ -1,8 +1,9 @@
-/// Unit tests for [VoiceController].
-///
-/// Uses [MockSttAdapter] and [MockTtsAdapter] exclusively.
-/// No microphone, Android device, Whisper model, network, or audio hardware.
-library voice_controller_test;
+/*
+ * Unit tests for [VoiceController].
+ *
+ * Uses [MockSttAdapter] and [MockTtsAdapter] exclusively.
+ * No microphone, Android device, Whisper model, network, or audio hardware.
+ */
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smriti_app/features/voice/intent_engine.dart';

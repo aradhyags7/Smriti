@@ -152,10 +152,9 @@ class ReminderNotificationService implements IReminderNotificationService {
   ReminderNotificationService({
     INotificationScheduler? scheduler,
     DateTime Function()? clock,
-    tz.Location? location,
+    this._location,
   })  : _scheduler = scheduler ?? DefaultNotificationScheduler(),
-        _clock = clock ?? DateTime.now,
-        _location = location;
+        _clock = clock ?? DateTime.now;
 
   bool get isInitialized => _isInitialized;
 

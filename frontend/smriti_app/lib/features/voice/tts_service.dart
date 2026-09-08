@@ -170,12 +170,10 @@ class IndicTtsAdapter implements TtsAdapter {
   static const Set<String> defaultSupportedLanguages = {'en', 'hi', 'bn'};
 
   IndicTtsAdapter({
-    IndicTtsSynthesisFunction? synthesizer,
-    AudioPlayer? Function()? audioPlayerFactory,
+    this._synthesizer,
+    this._audioPlayerFactory,
     Set<String>? supportedLanguages,
-  })  : _synthesizer = synthesizer,
-        _audioPlayerFactory = audioPlayerFactory,
-        _supportedLanguages = supportedLanguages ?? defaultSupportedLanguages;
+  })  : _supportedLanguages = supportedLanguages ?? defaultSupportedLanguages;
 
   @override
   TtsStatus get status => _status;

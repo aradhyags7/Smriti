@@ -1,15 +1,17 @@
-/// Intent Engine — Pure Dart, completely offline.
-///
-/// Responsibilities:
-///   - Receive a raw transcript string.
-///   - Normalize the transcript.
-///   - Match against multilingual phrase patterns.
-///   - Return a [VoiceIntentResult] with a typed [VoiceIntent],
-///     a confidence score, and an extensible parameters map.
-///
-/// This file has NO dependency on:
-///   Flutter framework, BuildContext, navigation, STT, TTS,
-///   notifications, databases, or any network/API call.
+/*
+ * Intent Engine — Pure Dart, completely offline.
+ *
+ * Responsibilities:
+ *   - Receive a raw transcript string.
+ *   - Normalize the transcript.
+ *   - Match against multilingual phrase patterns.
+ *   - Return a [VoiceIntentResult] with a typed [VoiceIntent],
+ *     a confidence score, and an extensible parameters map.
+ *
+ * This file has NO dependency on:
+ *   Flutter framework, BuildContext, navigation, STT, TTS,
+ *   notifications, databases, or any network/API call.
+ */
 
 // ---------------------------------------------------------------------------
 // VoiceIntent Enum

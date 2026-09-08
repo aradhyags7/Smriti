@@ -172,9 +172,8 @@ class SpeechToTextAdapter implements SttAdapter {
   /// An optional [speechToText] instance may be injected for testing.
   SpeechToTextAdapter({
     stt.SpeechToText? speechToText,
-    bool Function()? permissionStatusOverride,
-  })  : _speechToText = speechToText ?? stt.SpeechToText(),
-        _permissionStatusOverride = permissionStatusOverride;
+    this._permissionStatusOverride,
+  })  : _speechToText = speechToText ?? stt.SpeechToText();
 
   @override
   SttStatus get status => _status;
@@ -771,10 +770,9 @@ class WhisperSttAdapter implements SttAdapter {
 
   WhisperSttAdapter({
     this.modelPath,
-    dynamic Function()? whisperControllerFactory,
-    dynamic Function()? recorderFactory,
-  })  : _whisperControllerFactory = whisperControllerFactory,
-        _recorderFactory = recorderFactory;
+    this._whisperControllerFactory,
+    this._recorderFactory,
+  });
 
   /// Factory constructor that dynamically resolves the model path in the
   /// app-private directory (`getApplicationSupportDirectory()`) before creating

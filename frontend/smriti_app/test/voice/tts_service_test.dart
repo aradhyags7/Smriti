@@ -203,12 +203,12 @@ void main() {
       String? synthesizedText;
       String? synthesizedLang;
 
-      final testSynthesizer = (String text, String lang) async {
+      Future<Uint8List> testSynthesizer(String text, String lang) async {
         synthesizedText = text;
         synthesizedLang = lang;
         // Return dummy bytes
         return Uint8List.fromList([0, 1, 2, 3]);
-      };
+      }
 
       final indicAdapter = IndicTtsAdapter(
         synthesizer: testSynthesizer,

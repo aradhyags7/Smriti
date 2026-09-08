@@ -1,20 +1,21 @@
-/// Unit tests for [IntentEngine].
-///
-/// Tests cover:
-///   1. Every intent — English canonical command
-///   2. Every intent — Hindi canonical command
-///   3. Every intent — Bengali canonical command
-///   4. Empty transcript
-///   5. Whitespace-only transcript
-///   6. Unknown / unrelated command
-///   7. Case variation
-///   8. Extra whitespace
-///   9. Natural phrase variation (non-canonical wording)
-///  10. Ambiguous command (potential cross-intent confusion)
-///  11. Punctuation handling
-///
-/// No Flutter, no UI, no navigation — pure Dart only.
-library intent_engine_test;
+/*
+ * Unit tests for [IntentEngine].
+ *
+ * Tests cover:
+ *   1. Every intent — English canonical command
+ *   2. Every intent — Hindi canonical command
+ *   3. Every intent — Bengali canonical command
+ *   4. Empty transcript
+ *   5. Whitespace-only transcript
+ *   6. Unknown / unrelated command
+ *   7. Case variation
+ *   8. Extra whitespace
+ *   9. Natural phrase variation (non-canonical wording)
+ *  10. Ambiguous command (potential cross-intent confusion)
+ *  11. Punctuation handling
+ *
+ * No Flutter, no UI, no navigation — pure Dart only.
+ */
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smriti_app/features/voice/intent_engine.dart';

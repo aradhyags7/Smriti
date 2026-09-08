@@ -1,15 +1,15 @@
-/// Unit tests for [WhisperSttAdapter].
-///
-/// These tests verify the adapter's behaviour WITHOUT:
-///   - a physical Android device
-///   - real whisper_ggml native library
-///   - a real GGML model file
-///   - internet access
-///   - microphone hardware
-///
-/// All native dependencies are exercised through factory injection or
-/// structural checks only. Successful Whisper inference is NOT faked.
-library whisper_stt_adapter_test;
+/*
+ * Structural and fallback unit tests for [WhisperSttAdapter].
+ *
+ * These tests verify the state machine, error handling, parameter defaults,
+ * and interface compliance of [WhisperSttAdapter] WITHOUT requiring:
+ *   - the native whisper_ggml dynamic library
+ *   - model binary files
+ *   - microphone hardware
+ *
+ * All native dependencies are exercised through factory injection or
+ * structural checks only. Successful Whisper inference is NOT faked.
+ */
 
 import 'dart:async';
 import 'dart:io';
