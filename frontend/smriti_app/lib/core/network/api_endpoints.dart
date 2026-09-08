@@ -1,8 +1,35 @@
 import 'package:flutter/foundation.dart';
 
 class ApiEndpoints {
-  // Uses 10.0.2.2 for Android emulator, 127.0.0.1 for Windows/Web/macOS
+  // Live Render backend URL.
+  // Can be configured directly here or passed at build time:
+  // flutter build apk --dart-define=BACKEND_URL=https://your-service.onrender.com
+  static const String _envUrl = String.fromEnvironment('BACKEND_URL');
+
+  // Change this to your exact Render URL (or pass via --dart-define)
+  static String liveBackendUrl = 'https://smriti-backend.onrender.com';
+
   static String get baseUrl {
+    // 1. Build-time override via --dart-define=BACKEND_URL=...
+    if (_envUrl.isNotEmpty) {
+      return _envUrl.endsWith('/') ? _envUrl.substring(0, _envUrl.length - 1) : _envUrl;
+    }
+
+    // 2. In release/APK mode, always use the live cloud backend
+    if (kReleaseMode || kProfileMode) {
+      return liveBackendUrl.endsWith('/')
+          ? liveBackendUrl.substring(0, liveBackendUrl.length - 1)
+          : liveBackendUrl;
+    }
+
+    // 3. If live URL is set to an active https server, use it
+    if (liveBackendUrl.isNotEmpty && liveBackendUrl.startsWith('https://')) {
+      return liveBackendUrl.endsWith('/')
+          ? liveBackendUrl.substring(0, liveBackendUrl.length - 1)
+          : liveBackendUrl;
+    }
+
+    // 4. Local development fallbacks
     if (kIsWeb) return 'http://127.0.0.1:8000';
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
