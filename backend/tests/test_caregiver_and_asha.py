@@ -150,3 +150,96 @@ def test_asha_assign_and_care_circle(client, test_db):
     assert resp.status_code == 200
     circle = resp.json()
     assert circle["asha_worker"]["name"] == "Devi ASHA"
+
+
+def test_caregiver_analytics_activity_alerts_reminiscence(client, test_db):
+    # Setup caregiver & patient
+    cg_user = User(
+        id="cg-user-3",
+        full_name="Caregiver Three",
+        email="cg3@test.com",
+        hashed_password=get_password_hash("pass123"),
+        role="caregiver",
+    )
+    test_db.add(cg_user)
+
+    pt_user = User(
+        id="pt-user-3",
+        full_name="Grandpa Shravan",
+        email="shravan3@test.com",
+        hashed_password=get_password_hash("pass123"),
+        role="patient",
+    )
+    test_db.add(pt_user)
+    test_db.commit()
+
+    token = create_access_token({"sub": cg_user.email})
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Connect
+    resp = client.get("/api/v1/caregivers/available-patients", headers=headers)
+    assert resp.status_code == 200
+    pt_id = resp.json()[0]["patient_id"]
+
+    client.post(
+        "/api/v1/caregivers/connect-patient",
+        headers=headers,
+        json={"patient_id": pt_id, "relationship": "Grandfather"},
+    )
+
+    # 1. Test Analytics
+    resp = client.get(f"/api/v1/caregivers/patient/{pt_id}/analytics?days=14", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["patient_name"] == "Grandpa Shravan"
+    assert "risk_level" in data
+    assert "current_memory" in data
+    assert "trend" in data
+
+    # 2. Test Activity Feed
+    resp = client.get(f"/api/v1/caregivers/patient/{pt_id}/activity-feed", headers=headers)
+    assert resp.status_code == 200
+    feed = resp.json()
+    assert "date" in feed
+    assert "games" in feed
+
+    # 3. Test Alerts
+    resp = client.get(f"/api/v1/caregivers/patient/{pt_id}/alerts", headers=headers)
+    assert resp.status_code == 200
+    alerts = resp.json()
+    assert isinstance(alerts, list)
+
+    # 4. Test Reminiscence Vault Create, List & Delete
+    resp = client.post(
+        f"/api/v1/caregivers/patient/{pt_id}/reminiscence",
+        headers=headers,
+        json={
+            "title": "Family Trip to Kaziranga",
+            "caption": "Grandpa with grandchildren in 2021",
+            "media_type": "PHOTO",
+            "media_url": "assets/images/games/reminiscence_memory.jpg",
+            "relationship_tag": "Family",
+        },
+    )
+    assert resp.status_code in (200, 201)
+    memory = resp.json()
+    assert memory["title"] == "Family Trip to Kaziranga"
+    assert memory["relationship_tag"] == "Family"
+    memory_id = memory["id"]
+
+    # List reminiscences
+    resp = client.get(f"/api/v1/caregivers/patient/{pt_id}/reminiscence", headers=headers)
+    assert resp.status_code == 200
+    mems = resp.json()
+    assert len(mems) == 1
+    assert mems[0]["id"] == memory_id
+
+    # Delete reminiscence
+    resp = client.delete(f"/api/v1/caregivers/reminiscence/{memory_id}", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "success"
+
+    # List again -> 0
+    resp = client.get(f"/api/v1/caregivers/patient/{pt_id}/reminiscence", headers=headers)
+    assert resp.status_code == 200
+    assert not any(m["id"] == memory_id for m in resp.json())
