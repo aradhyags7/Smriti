@@ -11,6 +11,7 @@ class AshaPatient {
   final String? phoneNumber;
   final int age;
   final String gender;
+  final String? dementiaType;
   final String village;
   final String district;
   final String status;
@@ -29,6 +30,7 @@ class AshaPatient {
     this.phoneNumber,
     required this.age,
     required this.gender,
+    this.dementiaType,
     required this.village,
     required this.district,
     required this.status,
@@ -49,6 +51,7 @@ class AshaPatient {
       phoneNumber: json['phone_number'],
       age: json['age'] ?? 72,
       gender: json['gender'] ?? 'other',
+      dementiaType: json['dementia_type'],
       village: json['village'] ?? 'Guwahati Sector',
       district: json['district'] ?? 'Kamrup',
       status: json['status'] ?? 'Stable',

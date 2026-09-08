@@ -3,13 +3,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.security import create_access_token
-from app.models import User
-from app.schemas.auth import TokenResponse, UserSignupRequest, UserLoginRequest
+from app.models import User, Patient
+from app.schemas.auth import TokenResponse, UserSignupRequest, UserLoginRequest, GoogleLoginRequest
 from app.schemas.user import UserResponse
-from app.services.auth_service import authenticate_user, register_user
+from app.services.auth_service import (
+    authenticate_user,
+    register_user,
+    verify_google_id_token,
+    authenticate_or_create_google_user,
+)
 
 router = APIRouter()
 
@@ -64,15 +70,64 @@ def login(
 
     sub = user.email or user.phone_number or str(user.id)
     access_token = create_access_token(data={"sub": sub})
+    is_onboarded = None
+    if user.role == "patient":
+        pat = db.query(Patient).filter(Patient.user_id == user.id).first()
+        is_onboarded = bool(pat.is_onboarded) if pat else False
+
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
         refresh_token="dummy_refresh_token",
-        expires_in=3600,
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         user_id=str(user.id),
         role=user.role,
         full_name=user.full_name,
         email=user.email,
+        is_onboarded=is_onboarded,
+    )
+
+
+@router.post(
+    "/google",
+    response_model=TokenResponse,
+    summary="Continue with Google authentication",
+)
+def google_auth(
+    request: GoogleLoginRequest,
+    db: Session = Depends(get_db),
+):
+    """Authenticate via Google ID token.
+
+    1. Cryptographically verifies Google ID token with Google servers.
+    2. Finds existing user by Google `sub` or safely provisions a new user.
+    3. Rejects collision if email belongs to an existing LOCAL account (409 Conflict).
+    4. Issues the standard SMRITI JWT access token.
+    """
+    google_info = verify_google_id_token(request.id_token)
+    user = authenticate_or_create_google_user(
+        db=db,
+        google_info=google_info,
+        requested_role=request.role,
+    )
+
+    sub = user.email or user.phone_number or str(user.id)
+    access_token = create_access_token(data={"sub": sub})
+    is_onboarded = None
+    if user.role == "patient":
+        pat = db.query(Patient).filter(Patient.user_id == user.id).first()
+        is_onboarded = bool(pat.is_onboarded) if pat else False
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        refresh_token="dummy_refresh_token",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user_id=str(user.id),
+        role=user.role,
+        full_name=user.full_name,
+        email=user.email,
+        is_onboarded=is_onboarded,
     )
 
 

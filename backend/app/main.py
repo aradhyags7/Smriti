@@ -12,12 +12,13 @@ from app.api.asha import router as asha_router
 from app.api.sync import router as sync_router
 from app.api.reminders import router as reminders_router
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.database import Base, engine, ensure_database_schema
 import app.models  # Ensure all SQLAlchemy models are registered
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    ensure_database_schema(engine)
     yield
 
 # This is the exact "app" variable Uvicorn is looking for

@@ -163,6 +163,7 @@ class AshaPatientItem(BaseModel):
     phone_number: Optional[str] = None
     age: Optional[int] = 72
     gender: Optional[str] = "other"
+    dementia_type: Optional[str] = None
     village: str = "Guwahati Sector"
     district: str = "Kamrup"
     status: str = "Stable"

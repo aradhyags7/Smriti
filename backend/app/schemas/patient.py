@@ -124,7 +124,10 @@ class PatientResponse(BaseModel):
     id: str = Field(..., description="Server-assigned patient UUID.")
     user_id: str = Field(..., description="Linked user account UUID.")
     date_of_birth: date = Field(..., description="Date of birth.")
-    gender: Gender = Field(..., description="Biological gender.")
+    gender: str = Field(..., description="Biological gender.")
+    age: Optional[int] = Field(default=None, description="Patient age in years.")
+    dementia_type: Optional[str] = Field(default=None, description="Diagnosed dementia type.")
+    is_onboarded: bool = Field(default=False, description="Whether first-time onboarding is complete.")
     education_level: EducationLevel = Field(..., description="Education level.")
     primary_language: str = Field(..., description="Primary language code.")
     emergency_contact_name: str = Field(..., description="Emergency contact name.")
@@ -132,6 +135,33 @@ class PatientResponse(BaseModel):
     medical_notes: Optional[str] = Field(default=None, description="Medical notes.")
     created_at: datetime = Field(..., description="Record creation timestamp.")
     updated_at: datetime = Field(..., description="Last update timestamp.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PatientOnboardingRequest(BaseModel):
+    """Request payload for first-time patient onboarding."""
+    age: int = Field(..., ge=1, le=130, description="Patient's age in years.")
+    gender: str = Field(..., description="Patient's gender (Male, Female, Other).")
+    dementia_type: str = Field(..., description="Type of dementia selected from standard diagnostic options.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PatientProfileResponse(BaseModel):
+    """Patient profile returned for the currently authenticated patient."""
+    id: str = Field(..., description="Patient UUID.")
+    user_id: str = Field(..., description="User UUID.")
+    full_name: str = Field(..., description="Patient full name.")
+    email: Optional[str] = Field(default=None, description="Patient email address.")
+    phone_number: Optional[str] = Field(default=None, description="Patient phone number.")
+    age: Optional[int] = Field(default=None, description="Patient age in years.")
+    gender: Optional[str] = Field(default=None, description="Patient gender.")
+    dementia_type: Optional[str] = Field(default=None, description="Type of dementia.")
+    is_onboarded: bool = Field(default=False, description="True if one-time onboarding has been completed.")
+    preferred_language: Optional[str] = Field(default="en", description="Preferred language.")
+    emergency_contact_name: Optional[str] = Field(default=None, description="Emergency contact name.")
+    emergency_contact_phone: Optional[str] = Field(default=None, description="Emergency contact phone.")
 
     model_config = ConfigDict(from_attributes=True)
 
