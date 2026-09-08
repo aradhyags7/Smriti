@@ -7,27 +7,32 @@ import 'features/patient/patient_home_screen.dart';
 import 'features/onboarding/cognitive_health_check_screen.dart';
 import 'features/caregiver/caregiver_dashboard_screen.dart';
 import 'features/asha/asha_dashboard_screen.dart';
+import 'screens/home_screen.dart';
+
 void main() {
-runApp(const SmritiApp());
+  runApp(const SmritiApp());
 }
+
 class SmritiApp extends StatelessWidget {
-const SmritiApp({super.key});
-@override
-Widget build(BuildContext context) {
-return MaterialApp(
-title: 'Smriti',
-theme: AppTheme.lightTheme,
-debugShowCheckedModeBanner: false,
-initialRoute: '/',
-routes: {
-'/': (context) => const LaunchScreen(),
-'/login': (context) => const LoginScreen(),
-'/signup': (context) => const SignupScreen(),
-'/home': (context) => const PatientHomeScreen(),
-'/health-check': (context) => const CognitiveHealthCheckScreen(),
-'/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
-'/asha-dashboard': (context) => const AshaDashboardScreen(),
-},
-);
-}
+  const SmritiApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Smriti',
+      theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LaunchScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
+        '/home': (context) => const PatientHomeScreen(),
+        '/health-check': (context) => const CognitiveHealthCheckScreen(),
+        '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
+        '/asha-dashboard': (context) => const AshaDashboardScreen(),
+        '/games': (context) => const HomeScreen(),
+      },
+    );
+  }
 }

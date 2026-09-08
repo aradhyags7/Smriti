@@ -1,3 +1,4 @@
 # smriti_app
 
-A new Flutter project.
+SMRITI - AI-Powered Cognitive Care Platform (Flutter Patient App)
+
