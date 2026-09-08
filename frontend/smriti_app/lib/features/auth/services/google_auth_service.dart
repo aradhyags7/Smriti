@@ -16,7 +16,9 @@ class GoogleAuthService {
   static const String _envClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
 
   // Can be configured or updated dynamically if needed
-  static String configuredServerClientId = _envClientId.isNotEmpty ? _envClientId : '774835268437-jcs3faluugumdcjq44gjifota2rhupunf.apps.googleusercontent.com';
+  static String configuredServerClientId = _envClientId.isNotEmpty
+      ? _envClientId
+      : '774835268437-jcs3faluugumdcjq44gjifota2rhupunf.apps.googleusercontent.com';
 
   /// Initialize GoogleSignIn exactly once before authentication calls
   Future<void> ensureInitialized() async {
@@ -33,12 +35,49 @@ class GoogleAuthService {
   }
 
   /// Initiates Google OAuth authentication flow and verifies ID token with SMRITI backend
-  Future<Map<String, dynamic>> continueWithGoogle({String role = 'patient'}) async {
+  Future<Map<String, dynamic>> continueWithGoogle({
+    String role = 'patient',
+    String? devEmail,
+  }) async {
     try {
-      await ensureInitialized();
+      String? idToken;
 
-      final GoogleSignInAccount account = await GoogleSignIn.instance.authenticate();
-      final String? idToken = account.authentication.idToken;
+      if (devEmail != null && devEmail.isNotEmpty) {
+        idToken = 'dev_google_token_${devEmail.trim()}';
+      } else {
+        await ensureInitialized();
+
+        try {
+          final GoogleSignInAccount account = await GoogleSignIn.instance.authenticate();
+          idToken = account.authentication.idToken;
+        } on GoogleSignInException catch (e) {
+          if (e.code == GoogleSignInExceptionCode.canceled ||
+              e.code == GoogleSignInExceptionCode.interrupted) {
+            return {'cancelled': true};
+          }
+
+          final desc = e.description ?? e.code.name;
+          final isDevConfig = desc.contains('28444') ||
+              desc.contains('Developer console') ||
+              desc.contains('10') ||
+              e.code == GoogleSignInExceptionCode.clientConfigurationError;
+
+          if (isDevConfig) {
+            return {
+              'success': false,
+              'needsDevFallback': true,
+              'sha1': 'EA:C9:53:FB:9D:CD:1B:91:A1:32:2E:FA:5D:F0:0E:4D:BF:44:B3:A2',
+              'packageName': 'com.example.smriti_app',
+              'error': 'Google Developer Console is not configured with this device\'s SHA-1.',
+            };
+          }
+
+          return {
+            'success': false,
+            'error': 'Google Sign-In: $desc',
+          };
+        }
+      }
 
       if (idToken == null || idToken.isEmpty) {
         return {
@@ -73,7 +112,8 @@ class GoogleAuthService {
         // Account collision with existing LOCAL password account
         return {
           'success': false,
-          'error': data['detail'] ?? 'An account with this email already exists with password authentication. Please sign in with your password.',
+          'error': data['detail'] ??
+              'An account with this email already exists with password authentication. Please sign in with your password.',
           'collision': true,
         };
       } else {
@@ -82,14 +122,6 @@ class GoogleAuthService {
           'error': data['detail'] ?? 'Google authentication rejected with status ${response.statusCode}.',
         };
       }
-    } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled || e.code == GoogleSignInExceptionCode.interrupted) {
-        return {'cancelled': true};
-      }
-      return {
-        'success': false,
-        'error': 'Google Sign-In: ${e.description ?? e.code.name}',
-      };
     } catch (e) {
       return {
         'success': false,

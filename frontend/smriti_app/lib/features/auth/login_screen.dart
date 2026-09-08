@@ -3,6 +3,7 @@ import '../../core/theme/app_colors.dart';
 import 'services/auth_service.dart';
 import 'services/google_auth_service.dart';
 import 'widgets/google_sign_in_button.dart';
+import 'widgets/google_dev_fallback_sheet.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -48,20 +49,17 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    if (result['needsDevFallback'] == true) {
+      GoogleDevFallbackSheet.show(
+        context,
+        role: _role,
+        onSuccess: (data) => _navigateToRolePortal(data),
+      );
+      return;
+    }
+
     if (result['success'] == true) {
-      final userRole = (result['data']?['role'] ?? _role).toString().toLowerCase();
-      if (userRole == 'caregiver') {
-        Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
-      } else if (userRole == 'asha') {
-        Navigator.pushReplacementNamed(context, '/asha-dashboard');
-      } else {
-        final isOnboarded = result['data']?['is_onboarded'] == true;
-        if (isOnboarded) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          Navigator.pushReplacementNamed(context, '/patient-onboarding');
-        }
-      }
+      _navigateToRolePortal(result['data'] ?? {});
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -69,6 +67,22 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: Colors.redAccent,
         ),
       );
+    }
+  }
+
+  void _navigateToRolePortal(Map<String, dynamic> data) {
+    final userRole = (data['role'] ?? _role).toString().toLowerCase();
+    if (userRole == 'caregiver') {
+      Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
+    } else if (userRole == 'asha') {
+      Navigator.pushReplacementNamed(context, '/asha-dashboard');
+    } else {
+      final isOnboarded = data['is_onboarded'] == true;
+      if (isOnboarded) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/patient-onboarding');
+      }
     }
   }
 
@@ -107,19 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (result['success'] == true) {
-      final userRole = (result['data']?['role'] ?? _role).toString().toLowerCase();
-      if (userRole == 'caregiver') {
-        Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
-      } else if (userRole == 'asha') {
-        Navigator.pushReplacementNamed(context, '/asha-dashboard');
-      } else {
-        final isOnboarded = result['data']?['is_onboarded'] == true;
-        if (isOnboarded) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          Navigator.pushReplacementNamed(context, '/patient-onboarding');
-        }
-      }
+      _navigateToRolePortal(result['data'] ?? {});
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

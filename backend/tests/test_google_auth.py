@@ -187,3 +187,18 @@ def test_existing_email_password_login_continues_to_work(client, test_db):
     assert resp.status_code == 200
     assert "access_token" in resp.json()
     assert resp.json()["email"] == "standard@test.com"
+
+
+def test_google_login_dev_token_in_development_mode(client, test_db):
+    """Dev tokens allow local testing without Google Cloud Console setup."""
+    with patch.object(settings, "GOOGLE_SERVER_CLIENT_ID", "mock-client-id.apps.googleusercontent.com"), \
+         patch.object(settings, "ENVIRONMENT", "development"):
+        resp = client.post(
+            "/api/v1/auth/google",
+            json={"id_token": "dev_google_token_dev.tester@smriti.care", "role": "patient"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["email"] == "dev.tester@smriti.care"
+        assert data["role"] == "patient"
+        assert "access_token" in data

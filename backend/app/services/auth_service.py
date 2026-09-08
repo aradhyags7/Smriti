@@ -133,6 +133,20 @@ def verify_google_id_token(token: str) -> Dict[str, Any]:
             detail="Google authentication is not configured on the server. GOOGLE_SERVER_CLIENT_ID must be set in environment variables.",
         )
 
+    # In development mode, allow mock / dev Google tokens for testing when Google Cloud Console is not configured
+    if settings.ENVIRONMENT == "development" and (token.startswith("dev_google_token_") or token.startswith("dev_token_")):
+        email = token.replace("dev_google_token_", "").replace("dev_token_", "").strip()
+        if not email or "@" not in email:
+            email = "google.user@smriti.care"
+        name_parts = email.split("@")[0].replace(".", " ").title()
+        return {
+            "sub": f"google_dev_sub_{email}",
+            "email": email,
+            "name": name_parts,
+            "email_verified": True,
+            "picture": None,
+        }
+
     try:
         id_info = id_token.verify_oauth2_token(
             token,
