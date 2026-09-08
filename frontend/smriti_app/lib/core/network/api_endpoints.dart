@@ -66,4 +66,12 @@ class ApiEndpoints {
 
   // Patient Care Circle
   static String get patientCareCircle => '$baseUrl/api/v1/asha/care-circle';
+
+  // Caregiver Patient Analytics & Features
+  static String caregiverAnalytics(String patientId, {int days = 14}) => '$baseUrl/api/v1/caregivers/patient/$patientId/analytics?days=$days';
+  static String caregiverActivityFeed(String patientId) => '$baseUrl/api/v1/caregivers/patient/$patientId/activity-feed';
+  static String caregiverAlerts(String patientId) => '$baseUrl/api/v1/caregivers/patient/$patientId/alerts';
+  static String caregiverAcknowledgeAlert(String alertId) => '$baseUrl/api/v1/caregivers/alerts/$alertId/acknowledge';
+  static String caregiverReminiscences(String patientId) => '$baseUrl/api/v1/caregivers/patient/$patientId/reminiscence';
+  static String caregiverDeleteReminiscence(String memoryId) => '$baseUrl/api/v1/caregivers/reminiscence/$memoryId';
 }
