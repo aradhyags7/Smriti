@@ -1,15 +1,19 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-# Load environment variables from .env
+# Load environment variables from .env relative to backend root
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 load_dotenv()
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://ashish-shahi:ashishshahi@localhost:5432/smriti_db",
-)
+# Always point sqlite to the backend/smriti.db file regardless of CWD
+default_db_file = (Path(__file__).resolve().parent.parent.parent / "smriti.db").as_posix()
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL or DATABASE_URL.startswith("sqlite:///./"):
+    DATABASE_URL = f"sqlite:///{default_db_file}"
 
 # Render provides postgres://, SQLAlchemy 2.0 requires postgresql://
 if DATABASE_URL.startswith("postgres://"):
@@ -19,7 +23,7 @@ connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite")
 
 engine = create_engine(
     DATABASE_URL,
-    echo=os.getenv("DEBUG", "False").lower() in ("true", "1", "t"),
+    echo=False,
     connect_args=connect_args,
 )
 
