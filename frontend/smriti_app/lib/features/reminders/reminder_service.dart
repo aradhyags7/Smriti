@@ -75,10 +75,11 @@ class ReminderService implements IReminderService {
     if (_isInitialized && _prefs != null) return;
 
     try {
+      final provider = _prefsProvider;
       if (_injectedPrefs != null) {
         _prefs = _injectedPrefs;
-      } else if (_prefsProvider != null) {
-        _prefs = await _prefsProvider!();
+      } else if (provider != null) {
+        _prefs = await provider();
       } else {
         _prefs = await SharedPreferences.getInstance();
       }

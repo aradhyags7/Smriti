@@ -192,8 +192,9 @@ class IndicTtsAdapter implements TtsAdapter {
     _lastFailure = null;
 
     try {
-      if (_audioPlayerFactory != null) {
-        _audioPlayer = _audioPlayerFactory!();
+      final playerFactory = _audioPlayerFactory;
+      if (playerFactory != null) {
+        _audioPlayer = playerFactory();
       } else {
         _audioPlayer = AudioPlayer();
       }
@@ -245,7 +246,8 @@ class IndicTtsAdapter implements TtsAdapter {
     }
 
     // 2. Synthesis configuration check
-    if (_synthesizer == null) {
+    final synthesizer = _synthesizer;
+    if (synthesizer == null) {
       final failure = const TtsFailure(
         type: TtsFailureType.pendingConfiguration,
         message:
@@ -274,7 +276,7 @@ class IndicTtsAdapter implements TtsAdapter {
       _status = TtsStatus.speaking;
       onStart?.call();
 
-      audioBytes = await _synthesizer!(text, languageCode);
+      audioBytes = await synthesizer(text, languageCode);
     } catch (e) {
       _isSpeaking = false;
       _status = TtsStatus.error;

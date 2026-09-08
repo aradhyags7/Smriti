@@ -506,10 +506,8 @@ void main() {
     });
 
     test('resolveDefaultModelPath returns valid path string containing model file name', () async {
-      final path = await WhisperSttAdapter.resolveDefaultModelPath(
-        modelFileName: 'ggml-base-q5_1.bin',
-      );
-      expect(path, contains('ggml-base-q5_1.bin'));
+      final path = await WhisperSttAdapter.resolveDefaultModelPath();
+      expect(path, contains('ggml-tiny-q5_1.bin'));
       expect(path, isNotEmpty);
     });
 
@@ -517,14 +515,124 @@ void main() {
       final mockController = _MockWhisperController();
       final mockRecorder = _MockAudioRecorder();
       final adapter = await WhisperSttAdapter.createWithResolvedModelPath(
-        modelFileName: 'ggml-base-q5_1.bin',
         whisperControllerFactory: () => mockController,
         recorderFactory: () => mockRecorder,
       );
 
       expect(adapter, isA<WhisperSttAdapter>());
-      expect(adapter.modelPath, contains('ggml-base-q5_1.bin'));
+      expect(adapter.modelPath, contains('ggml-tiny-q5_1.bin'));
       expect(adapter.modelStatus, equals(WhisperModelStatus.available));
     });
+
+    test('WhisperSttAdapter can cleanly start, stop, and start a second session', () async {
+      final mockController = _MockWhisperController();
+      final mockRecorder = _MockAudioRecorder();
+      final adapter = WhisperSttAdapter(
+        modelPath: tempModelFile.path,
+        whisperControllerFactory: () => mockController,
+        recorderFactory: () => mockRecorder,
+      );
+
+      // Session 1
+      await adapter.startListening(
+        languageCode: 'en',
+        onResult: (_) {},
+      );
+      expect(adapter.isListening, isTrue);
+      expect(adapter.status, equals(SttStatus.listening));
+
+      await adapter.stopListening();
+      expect(adapter.isListening, isFalse);
+      expect(adapter.status, equals(SttStatus.stopped));
+
+      // Session 2
+      await adapter.startListening(
+        languageCode: 'en',
+        onResult: (_) {},
+      );
+      expect(adapter.isListening, isTrue);
+      expect(adapter.status, equals(SttStatus.listening));
+      expect(mockRecorder.startStreamCallCount, equals(2));
+
+      await adapter.stopListening();
+      expect(adapter.isListening, isFalse);
+      expect(adapter.status, equals(SttStatus.stopped));
+    });
+
+    test('stopListening called multiple times is idempotent and safe', () async {
+      final mockController = _MockWhisperController();
+      final mockRecorder = _MockAudioRecorder();
+      final adapter = WhisperSttAdapter(
+        modelPath: tempModelFile.path,
+        whisperControllerFactory: () => mockController,
+        recorderFactory: () => mockRecorder,
+      );
+
+      await adapter.startListening(
+        languageCode: 'hi',
+        onResult: (_) {},
+      );
+
+      await adapter.stopListening();
+      expect(adapter.isListening, isFalse);
+      expect(adapter.status, equals(SttStatus.stopped));
+
+      // Second redundant call
+      await adapter.stopListening();
+      expect(adapter.isListening, isFalse);
+      expect(adapter.status, equals(SttStatus.stopped));
+    });
+
+    test('failure during live session creation stops AudioRecorder and allows retry', () async {
+      final mockRecorder = _MockAudioRecorder();
+      bool shouldThrow = true;
+
+      // Inject throwing dynamic controller
+      final throwingAdapter = WhisperSttAdapter(
+        modelPath: tempModelFile.path,
+        whisperControllerFactory: () => _ThrowingWhisperController(() => shouldThrow),
+        recorderFactory: () => mockRecorder,
+      );
+
+      SttFailure? capturedError;
+      await throwingAdapter.startListening(
+        languageCode: 'bn',
+        onResult: (_) {},
+        onError: (err) => capturedError = err,
+      );
+
+      expect(capturedError, isNotNull);
+      expect(throwingAdapter.isListening, isFalse);
+      expect(throwingAdapter.status, equals(SttStatus.error));
+      expect(mockRecorder.stopCalled, isTrue);
+
+      // Second attempt when error clears succeeds
+      shouldThrow = false;
+      await throwingAdapter.startListening(
+        languageCode: 'bn',
+        onResult: (_) {},
+      );
+      expect(throwingAdapter.isListening, isTrue);
+      expect(throwingAdapter.status, equals(SttStatus.listening));
+
+      await throwingAdapter.stopListening();
+      expect(throwingAdapter.isListening, isFalse);
+    });
   });
+}
+
+class _ThrowingWhisperController {
+  final bool Function() shouldThrow;
+  _ThrowingWhisperController(this.shouldThrow);
+
+  Future<_MockLiveSession> transcribeLive({
+    String? modelPath,
+    dynamic pcm16Stream,
+    String? lang,
+  }) async {
+    if (shouldThrow()) {
+      throw Exception('Simulated GGML failure during transcribeLive');
+    }
+    return _MockLiveSession();
+  }
 }

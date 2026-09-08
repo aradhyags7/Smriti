@@ -101,6 +101,10 @@ void main() {
     test('showProgress: "How am I doing"', () {
       expectIntent('How am I doing', VoiceIntent.showProgress);
     });
+
+    test('showProgress: "Show me how I am progressing this week."', () {
+      expectIntent('Show me how I am progressing this week.', VoiceIntent.showProgress);
+    });
   });
 
   // --------------------------------------------------------------------------
@@ -196,6 +200,22 @@ void main() {
 
     test('showProgress: "আমার অগ্রগতি দেখাও"', () {
       expectIntent('আমার অগ্রগতি দেখাও', VoiceIntent.showProgress);
+    });
+
+    test('setReminder: "প্রতিদিন সকাল আটটায় ওষধ খাওয়ার কথা মনে করিয়ে দাও" (Whisper ওষধ variant)', () {
+      expectIntent(
+        'প্রতিদিন সকাল আটটায় ওষধ খাওয়ার কথা মনে করিয়ে দাও',
+        VoiceIntent.setReminder,
+      );
+      final result = engine.recognize('প্রতিদিন সকাল আটটায় ওষধ খাওয়ার কথা মনে করিয়ে দাও');
+      expect(result.transcript, contains('ওষুধ'));
+    });
+
+    test('setReminder: "প্রতিদিন সকাল আটটায় ওষুধ খাওয়ার কথা মনে করিয়ে দাও" (standard ওষুধ spelling)', () {
+      expectIntent(
+        'প্রতিদিন সকাল আটটায় ওষুধ খাওয়ার কথা মনে করিয়ে দাও',
+        VoiceIntent.setReminder,
+      );
     });
   });
 

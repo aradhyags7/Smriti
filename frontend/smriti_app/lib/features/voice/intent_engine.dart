@@ -289,10 +289,10 @@ class IntentEngine {
       // English
       _PatternEntry([
         ['show', 'see', 'check', 'view', 'display', 'tell'],
-        ['progress', 'score', 'performance', 'result', 'report'],
+        ['progress', 'progressing', 'score', 'performance', 'result', 'report'],
       ], weight: 1.5),
       _PatternEntry([
-        ['how am i doing', 'how have i been doing', 'how did i do'],
+        ['how am i doing', 'how have i been doing', 'how did i do', 'how am i progressing', 'how i am progressing'],
       ], weight: 1.4),
       _PatternEntry([
         ['my progress', 'my score', 'my results'],
@@ -431,6 +431,8 @@ class IntentEngine {
     s = s.replaceAll(RegExp(r'[.!?,।]+$'), '').trim();
     // Lowercase (safe for Unicode — only affects ASCII).
     s = s.toLowerCase();
+    // Deterministic phonetic alias for Bengali Whisper transcription variant.
+    s = s.replaceAll('ওষধ', 'ওষুধ');
     return s;
   }
 

@@ -338,8 +338,9 @@ class SpeechToTextAdapter implements SttAdapter {
   // --------------------------------------------------------------------------
 
   Future<bool> _ensureMicrophonePermission() async {
-    if (_permissionStatusOverride != null) {
-      final granted = _permissionStatusOverride!();
+    final permissionOverride = _permissionStatusOverride;
+    if (permissionOverride != null) {
+      final granted = permissionOverride();
       if (!granted) {
         _status = SttStatus.unavailable;
         _lastFailure = const SttFailure(
@@ -779,9 +780,9 @@ class WhisperSttAdapter implements SttAdapter {
   /// app-private directory (`getApplicationSupportDirectory()`) before creating
   /// the [WhisperSttAdapter].
   ///
-  /// Default target: `<application-support-directory>/ggml-base-q5_1.bin`
+  /// Default target: `<application-support-directory>/ggml-tiny-q5_1.bin`
   static Future<WhisperSttAdapter> createWithResolvedModelPath({
-    String modelFileName = 'ggml-base-q5_1.bin',
+    String modelFileName = 'ggml-tiny-q5_1.bin',
     dynamic Function()? whisperControllerFactory,
     dynamic Function()? recorderFactory,
   }) async {
@@ -797,10 +798,10 @@ class WhisperSttAdapter implements SttAdapter {
   /// binary in the Android app-private storage directory.
   ///
   /// Priority:
-  ///   1. `<getApplicationSupportDirectory()>/ggml-base-q5_1.bin`
-  ///   2. `<getApplicationDocumentsDirectory()>/ggml-base-q5_1.bin`
+  ///   1. `<getApplicationSupportDirectory()>/ggml-tiny-q5_1.bin`
+  ///   2. `<getApplicationDocumentsDirectory()>/ggml-tiny-q5_1.bin`
   static Future<String> resolveDefaultModelPath({
-    String modelFileName = 'ggml-base-q5_1.bin',
+    String modelFileName = 'ggml-tiny-q5_1.bin',
   }) async {
     try {
       final supportDir = await getApplicationSupportDirectory();
@@ -888,12 +889,14 @@ class WhisperSttAdapter implements SttAdapter {
 
     // 3. Create the WhisperController and AudioRecorder instances
     try {
-      _whisperController = _whisperControllerFactory != null
-          ? _whisperControllerFactory!()
+      final whisperFactory = _whisperControllerFactory;
+      _whisperController = whisperFactory != null
+          ? whisperFactory()
           : WhisperController();
 
-      _recorder = _recorderFactory != null
-          ? _recorderFactory!()
+      final recorderFactory = _recorderFactory;
+      _recorder = recorderFactory != null
+          ? recorderFactory()
           : AudioRecorder();
 
       _status = SttStatus.available;
@@ -973,6 +976,22 @@ class WhisperSttAdapter implements SttAdapter {
     } catch (e) {
       _isListening = false;
       _status = SttStatus.error;
+      try {
+        await _partialsSubscription?.cancel();
+      } catch (_) {}
+      _partialsSubscription = null;
+      try {
+        final dynamic rec = _recorder;
+        // ignore: avoid_dynamic_calls
+        await rec?.stop();
+      } catch (_) {}
+      try {
+        final dynamic session = _liveSession;
+        // ignore: avoid_dynamic_calls
+        await session?.stop();
+      } catch (_) {}
+      _liveSession = null;
+
       final failure = SttFailure(
         type: SttFailureType.unknown,
         message: 'WhisperSttAdapter: Failed to start live session: $e',
@@ -985,7 +1004,7 @@ class WhisperSttAdapter implements SttAdapter {
 
   @override
   Future<void> stopListening() async {
-    if (!_isListening) return;
+    if (!_isListening && _liveSession == null) return;
     try {
       await _partialsSubscription?.cancel();
       _partialsSubscription = null;
@@ -995,6 +1014,7 @@ class WhisperSttAdapter implements SttAdapter {
       await recorder?.stop();
 
       final dynamic session = _liveSession;
+      _liveSession = null;
       // ignore: avoid_dynamic_calls
       final dynamic finalText = await session?.stop();
       _isListening = false;
@@ -1004,6 +1024,7 @@ class WhisperSttAdapter implements SttAdapter {
       }
     } catch (e) {
       _isListening = false;
+      _liveSession = null;
       _status = SttStatus.error;
       final failure = SttFailure(
         type: SttFailureType.unknown,
@@ -1026,6 +1047,7 @@ class WhisperSttAdapter implements SttAdapter {
       await recorder?.cancel();
 
       final dynamic session = _liveSession;
+      _liveSession = null;
       // ignore: avoid_dynamic_calls
       await session?.stop();
     } catch (_) {
@@ -1078,32 +1100,40 @@ class WhisperSttAdapter implements SttAdapter {
         ? rawStream
         : (rawStream as Stream).cast<Uint8List>();
 
-    // 2. Start whisper live session
-    // ignore: avoid_dynamic_calls
-    final dynamic session = await controller.transcribeLive(
-      modelPath: modelPath!,
-      pcm16Stream: pcm16Stream,
-      lang: langCode,
-    );
+    try {
+      // 2. Start whisper live session
+      // ignore: avoid_dynamic_calls
+      final dynamic session = await controller.transcribeLive(
+        modelPath: modelPath!,
+        pcm16Stream: pcm16Stream,
+        lang: langCode,
+      );
 
-    _liveSession = session;
+      _liveSession = session;
 
-    // 3. Listen to partial transcripts
-    // ignore: avoid_dynamic_calls
-    final Stream<String> partials = session.partials as Stream<String>;
-    _partialsSubscription = partials.listen(
-      (partial) {
-        _onResult?.call(partial);
-      },
-      onError: (Object err) {
-        final failure = SttFailure(
-          type: SttFailureType.unknown,
-          message: 'WhisperSttAdapter: Transcription stream error: $err',
-          originalError: err,
-        );
-        _lastFailure = failure;
-        _onError?.call(failure);
-      },
-    );
+      // 3. Listen to partial transcripts
+      // ignore: avoid_dynamic_calls
+      final Stream<String> partials = session.partials as Stream<String>;
+      _partialsSubscription = partials.listen(
+        (partial) {
+          _onResult?.call(partial);
+        },
+        onError: (Object err) {
+          final failure = SttFailure(
+            type: SttFailureType.unknown,
+            message: 'WhisperSttAdapter: Transcription stream error: $err',
+            originalError: err,
+          );
+          _lastFailure = failure;
+          _onError?.call(failure);
+        },
+      );
+    } catch (e) {
+      try {
+        // ignore: avoid_dynamic_calls
+        await recorder.stop();
+      } catch (_) {}
+      rethrow;
+    }
   }
 }

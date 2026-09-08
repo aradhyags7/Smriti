@@ -162,27 +162,27 @@ class VoiceController {
   // Navigation and UI transitions are the responsibility of the caller.
 
   /// Called when [VoiceIntent.startGame] is recognized.
-  void Function()? onStartGame;
+  FutureOr<void> Function()? onStartGame;
 
   /// Called when [VoiceIntent.openMemory] is recognized.
-  void Function()? onOpenMemory;
+  FutureOr<void> Function()? onOpenMemory;
 
   /// Called when [VoiceIntent.setReminder] is recognized.
   ///
   /// Future: will receive extracted reminder parameters.
-  void Function()? onSetReminder;
+  FutureOr<void> Function()? onSetReminder;
 
   /// Called when [VoiceIntent.setReminder] is recognized with the full [VoiceIntentResult].
-  void Function(VoiceIntentResult result)? onSetReminderWithResult;
+  FutureOr<void> Function(VoiceIntentResult result)? onSetReminderWithResult;
 
   /// Called when [VoiceIntent.callCaregiver] is recognized.
-  void Function()? onCallCaregiver;
+  FutureOr<void> Function()? onCallCaregiver;
 
   /// Called when [VoiceIntent.checkToday] is recognized.
-  void Function()? onCheckToday;
+  FutureOr<void> Function()? onCheckToday;
 
   /// Called when [VoiceIntent.showProgress] is recognized.
-  void Function()? onShowProgress;
+  FutureOr<void> Function()? onShowProgress;
 
   // --------------------------------------------------------------------------
   // Status / Error callbacks
@@ -217,6 +217,8 @@ class VoiceController {
   // --------------------------------------------------------------------------
 
   bool _isListening = false;
+  bool _isStarting = false;
+  bool _isStopping = false;
   bool _disposed = false;
   String? _lastDispatchedTranscript;
 
@@ -298,64 +300,114 @@ class VoiceController {
 
   /// Begins a voice recognition session.
   ///
-  /// If the controller is already listening, this call is a no-op to prevent
-  /// duplicate sessions.
+  /// If the controller is already listening or in transition, this call is a
+  /// safe no-op to prevent duplicate/overlapping sessions.
   ///
   /// Flow:
-  ///   1. Initialize STT if needed.
-  ///   2. Set state to [VoiceControllerState.listening].
-  ///   3. On transcript → [VoiceControllerState.processing] → recognize intent.
-  ///   4. Fire intent callback.
-  ///   5. Speak TTS response (best-effort).
+  ///   1. Safely stop TTS if active.
+  ///   2. Initialize STT if needed.
+  ///   3. Set state to [VoiceControllerState.listening].
+  ///   4. On transcript → [VoiceControllerState.processing] → recognize intent.
+  ///   5. Fire intent callback.
+  ///   6. Speak TTS response (best-effort).
   Future<void> startListening() async {
     _assertNotDisposed();
 
-    // Guard: prevent duplicate sessions
-    if (_isListening) return;
-
-    // Auto-initialize STT if not yet ready
-    if (!stt.isAvailable) {
-      final ok = await stt.initialize();
-      if (!ok) {
-        final err = _mapSttFailure(stt.lastFailure);
-        _emitError(err);
-        _setState(VoiceControllerState.error);
-        return;
-      }
+    // Guard: prevent duplicate sessions or overlapping transitions
+    if (_isListening || _isStarting || _isStopping || _state == VoiceControllerState.processing) {
+      return;
     }
 
-    _isListening = true;
-    _lastDispatchedTranscript = null;
-    _setState(VoiceControllerState.listening);
+    _isStarting = true;
 
-    await stt.startListening(
-      languageCode: languageCode,
-      onResult: _onSttResult,
-      onError: _onSttError,
-      onFinalResult: _onSttFinalResult,
-    );
+    try {
+      // Safely interrupt active TTS before opening the microphone to avoid
+      // hardware contention and recording device speaker output.
+      if (tts.isSpeaking || _state == VoiceControllerState.speaking) {
+        try {
+          await tts.stop();
+        } catch (_) {}
+      }
+
+      // Auto-initialize STT if not yet ready
+      if (!stt.isAvailable) {
+        final ok = await stt.initialize();
+        if (!ok) {
+          final err = _mapSttFailure(stt.lastFailure);
+          _emitError(err);
+          _setState(VoiceControllerState.error);
+          return;
+        }
+      }
+
+      _isListening = true;
+      _lastDispatchedTranscript = null;
+      _setState(VoiceControllerState.listening);
+
+      await stt.startListening(
+        languageCode: languageCode,
+        onResult: _onSttResult,
+        onError: _onSttError,
+        onFinalResult: _onSttFinalResult,
+      );
+    } catch (e) {
+      _isListening = false;
+      final err = VoiceControllerError(
+        type: VoiceControllerErrorType.sttOperationFailed,
+        message: 'Failed to start listening: $e',
+        originalError: e,
+      );
+      _emitError(err);
+      _setState(VoiceControllerState.error);
+    } finally {
+      _isStarting = false;
+    }
   }
 
   /// Stops the current listening session and finalizes recognition.
   Future<void> stopListening() async {
     _assertNotDisposed();
-    if (!_isListening) return;
+    if (!_isListening || _isStopping) return;
 
-    await stt.stopListening();
-    _isListening = false;
-    if (_state == VoiceControllerState.listening) {
-      _setState(VoiceControllerState.idle);
+    _isStopping = true;
+    try {
+      await stt.stopListening();
+      _isListening = false;
+      if (_state == VoiceControllerState.listening) {
+        _setState(VoiceControllerState.idle);
+      }
+    } catch (e) {
+      _isListening = false;
+      final err = VoiceControllerError(
+        type: VoiceControllerErrorType.sttOperationFailed,
+        message: 'Failed to stop listening: $e',
+        originalError: e,
+      );
+      _emitError(err);
+      _setState(VoiceControllerState.error);
+    } finally {
+      _isStopping = false;
     }
   }
 
   /// Cancels the current session immediately without emitting results.
   Future<void> cancel() async {
     _assertNotDisposed();
-    if (!_isListening) return;
+    if (!_isListening && _state == VoiceControllerState.idle) return;
 
-    await stt.cancel();
-    _isListening = false;
-    _setState(VoiceControllerState.idle);
+    try {
+      if (tts.isSpeaking || _state == VoiceControllerState.speaking) {
+        try {
+          await tts.stop();
+        } catch (_) {}
+      }
+      await stt.cancel();
+    } catch (_) {
+      // Ignore cancel errors
+    } finally {
+      _isListening = false;
+      _setState(VoiceControllerState.idle);
+    }
   }
 
   /// Releases all adapter resources.  The controller cannot be used after this.
@@ -397,11 +449,15 @@ class VoiceController {
     if (_disposed || transcript.trim().isEmpty) return;
     onTranscript?.call(transcript);
     _isListening = false;
-    _setState(VoiceControllerState.processing);
+    final normalized = transcript.trim().toLowerCase();
     if (_lastDispatchedTranscript != null &&
-        _lastDispatchedTranscript == transcript.trim().toLowerCase()) {
+        _lastDispatchedTranscript == normalized) {
+      if (_state == VoiceControllerState.listening) {
+        _setState(VoiceControllerState.idle);
+      }
       return;
     }
+    _setState(VoiceControllerState.processing);
     _processTranscript(transcript);
   }
 
@@ -426,23 +482,35 @@ class VoiceController {
   Future<void> _dispatchIntent(VoiceIntentResult result) async {
     // 1. Fire the appropriate action callback FIRST (before TTS).
     //    TTS is best-effort: action must always execute.
-    switch (result.intent) {
-      case VoiceIntent.startGame:
-        onStartGame?.call();
-      case VoiceIntent.openMemory:
-        onOpenMemory?.call();
-      case VoiceIntent.setReminder:
-        onSetReminder?.call();
-        onSetReminderWithResult?.call(result);
-      case VoiceIntent.callCaregiver:
-        onCallCaregiver?.call();
-      case VoiceIntent.checkToday:
-        onCheckToday?.call();
-      case VoiceIntent.showProgress:
-        onShowProgress?.call();
-      case VoiceIntent.unknown:
-        // No action callback for unknown; TTS feedback is the only response.
-        break;
+    try {
+      dynamic action;
+      switch (result.intent) {
+        case VoiceIntent.startGame:
+          action = onStartGame?.call();
+        case VoiceIntent.openMemory:
+          action = onOpenMemory?.call();
+        case VoiceIntent.setReminder:
+          onSetReminder?.call();
+          action = onSetReminderWithResult?.call(result);
+        case VoiceIntent.callCaregiver:
+          action = onCallCaregiver?.call();
+        case VoiceIntent.checkToday:
+          action = onCheckToday?.call();
+        case VoiceIntent.showProgress:
+          action = onShowProgress?.call();
+        case VoiceIntent.unknown:
+          // No action callback for unknown; TTS feedback is the only response.
+          break;
+      }
+      if (action is Future) {
+        await action;
+      }
+    } catch (e) {
+      _emitError(VoiceControllerError(
+        type: VoiceControllerErrorType.unknown,
+        message: 'Action callback failed: $e',
+        originalError: e,
+      ));
     }
 
     // 2. Speak the response (best-effort, non-blocking).

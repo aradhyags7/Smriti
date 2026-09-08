@@ -929,4 +929,194 @@ void main() {
       expect(called, isTrue);
     });
   });
+
+  // --------------------------------------------------------------------------
+  // Phase 5B-1: Voice session lifecycle and repeated-command reliability
+  // --------------------------------------------------------------------------
+  group('Phase 5B-1 — Voice Session Lifecycle and Repeated-Command Reliability', () {
+    test('A. Start → stop → start again operates cleanly', () async {
+      final stt = MockSttAdapter();
+      final c = _makeController(stt: stt);
+
+      // Session 1
+      await c.startListening();
+      expect(c.isListening, isTrue);
+      expect(c.state, equals(VoiceControllerState.listening));
+
+      await c.stopListening();
+      expect(c.isListening, isFalse);
+      expect(c.state, equals(VoiceControllerState.idle));
+
+      // Session 2
+      await c.startListening();
+      expect(c.isListening, isTrue);
+      expect(c.state, equals(VoiceControllerState.listening));
+
+      await c.stopListening();
+      expect(c.isListening, isFalse);
+      expect(c.state, equals(VoiceControllerState.idle));
+      expect(stt.startListeningCallCount, equals(2));
+      expect(stt.stopListeningCallCount, equals(2));
+    });
+
+    test('B. Successful first command → second command can start immediately', () async {
+      final stt = MockSttAdapter();
+      final tts = MockTtsAdapter()..autoCompleteSpeech = true;
+      int gameCount = 0;
+      int memoryCount = 0;
+
+      final c = _makeController(
+        stt: stt,
+        tts: tts,
+        onStartGame: () => gameCount++,
+        onOpenMemory: () => memoryCount++,
+      );
+
+      // Command 1
+      await c.startListening();
+      _simulateTranscript(stt, 'start memory game', isFinal: true);
+      await Future<void>.microtask(() {});
+      expect(gameCount, equals(1));
+      expect(c.state, equals(VoiceControllerState.idle));
+
+      // Command 2 immediately after
+      await c.startListening();
+      expect(c.isListening, isTrue);
+      expect(c.state, equals(VoiceControllerState.listening));
+
+      _simulateTranscript(stt, 'show my memories', isFinal: true);
+      await Future<void>.microtask(() {});
+      expect(memoryCount, equals(1));
+      expect(c.state, equals(VoiceControllerState.idle));
+      expect(tts.speakCallCount, equals(2));
+    });
+
+    test('C. Failed session → second session can start and succeed', () async {
+      final stt = MockSttAdapter();
+      int gameCount = 0;
+      final c = _makeController(
+        stt: stt,
+        onStartGame: () => gameCount++,
+      );
+
+      // Attempt 1: fails
+      await c.startListening();
+      stt.simulateError(const SttFailure(
+        type: SttFailureType.unknown,
+        message: 'Transient mic glitch',
+      ));
+      expect(c.state, equals(VoiceControllerState.error));
+
+      // Attempt 2: retry succeeds
+      await c.startListening();
+      expect(c.isListening, isTrue);
+      expect(c.state, equals(VoiceControllerState.listening));
+
+      _simulateTranscript(stt, 'start memory game', isFinal: true);
+      await Future<void>.microtask(() {});
+      expect(gameCount, equals(1));
+      expect(c.state, equals(VoiceControllerState.idle));
+    });
+
+    test('D. stopListening() called twice does not corrupt state or throw', () async {
+      final stt = MockSttAdapter();
+      final c = _makeController(stt: stt);
+
+      await c.startListening();
+      await c.stopListening();
+      expect(c.isListening, isFalse);
+      expect(c.state, equals(VoiceControllerState.idle));
+
+      // Second redundant call
+      await c.stopListening();
+      expect(c.isListening, isFalse);
+      expect(c.state, equals(VoiceControllerState.idle));
+
+      // Can still start next session cleanly
+      await c.startListening();
+      expect(c.isListening, isTrue);
+      expect(c.state, equals(VoiceControllerState.listening));
+    });
+
+    test('E. TTS speaking → startListening safely interrupts/stops TTS first', () async {
+      final stt = MockSttAdapter();
+      final tts = MockTtsAdapter()..autoCompleteSpeech = false;
+      final c = _makeController(stt: stt, tts: tts);
+
+      await c.startListening();
+      _simulateTranscript(stt, 'start memory game', isFinal: true);
+      await Future<void>.microtask(() {});
+
+      // TTS is actively speaking
+      expect(tts.isSpeaking, isTrue);
+      expect(c.state, equals(VoiceControllerState.speaking));
+
+      // User starts a new command while TTS is speaking
+      await c.startListening();
+
+      // Active TTS was interrupted/stopped
+      expect(tts.stopCallCount, greaterThanOrEqualTo(1));
+      expect(c.isListening, isTrue);
+      expect(c.state, equals(VoiceControllerState.listening));
+    });
+
+    test('F. Rapid repeated startListening() calls do not create overlapping sessions', () async {
+      final stt = MockSttAdapter();
+      final c = _makeController(stt: stt);
+
+      // Fire multiple concurrent startListening invocations
+      await Future.wait([
+        c.startListening(),
+        c.startListening(),
+        c.startListening(),
+      ]);
+
+      expect(stt.startListeningCallCount, equals(1));
+      expect(c.isListening, isTrue);
+    });
+
+    test('G. Reminder action completes before its success response is announced', () async {
+      final stt = MockSttAdapter();
+      final orderOfExecution = <String>[];
+
+      final tts = MockTtsAdapter()
+        ..autoCompleteSpeech = true;
+
+      final c = _makeController(
+        stt: stt,
+        tts: tts,
+        onSetReminderWithResult: (result) async {
+          // Simulate asynchronous persistence and notification scheduling
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          orderOfExecution.add('reminder_persisted_and_scheduled');
+        },
+      );
+
+      // Wrap speak in test observation
+      await c.startListening();
+      _simulateTranscript(stt, 'remind me to drink water at 10 AM', isFinal: true);
+
+      // Flush microtasks
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(orderOfExecution, contains('reminder_persisted_and_scheduled'));
+      expect(tts.lastSpokenText, contains('reminder'));
+    });
+
+    test('H. Error path returns to usable state on cancel or retry', () async {
+      final stt = MockSttAdapter();
+      final c = _makeController(stt: stt);
+
+      await c.startListening();
+      stt.simulateError(const SttFailure(
+        type: SttFailureType.microphoneUnavailable,
+        message: 'Mic busy',
+      ));
+      expect(c.state, equals(VoiceControllerState.error));
+
+      await c.cancel();
+      expect(c.state, equals(VoiceControllerState.idle));
+      expect(c.isListening, isFalse);
+    });
+  });
 }

@@ -93,7 +93,17 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
       if (!mounted) return;
       setState(() {
         _state = state;
-        _statusText = _formatStateName(state);
+        if (state == VoiceControllerState.listening ||
+            state == VoiceControllerState.processing ||
+            state == VoiceControllerState.error) {
+          _statusText = _formatStateName(state);
+        } else if (state == VoiceControllerState.idle) {
+          if (!_statusText.startsWith('Reminder') &&
+              !_statusText.startsWith('Time needed') &&
+              !_statusText.startsWith('Add reminder')) {
+            _statusText = _formatStateName(state);
+          }
+        }
       });
     };
 
@@ -230,23 +240,26 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
           _errorMessage = null;
         });
 
-        if (widget.voiceControllerFactory != null) {
-          _controller = await widget.voiceControllerFactory!();
-        } else {
-          // Lazy runtime initialization: resolve model and instantiate Whisper
-          final sttAdapter = await WhisperSttAdapter.createWithResolvedModelPath();
-          final ttsAdapter = IndicTtsAdapter();
-          final intentEngine = IntentEngine();
+        try {
+          if (widget.voiceControllerFactory != null) {
+            _controller = await widget.voiceControllerFactory!();
+          } else {
+            // Lazy runtime initialization: resolve model and instantiate Whisper
+            final sttAdapter = await WhisperSttAdapter.createWithResolvedModelPath();
+            final ttsAdapter = IndicTtsAdapter();
+            final intentEngine = IntentEngine();
 
-          _controller = VoiceController(
-            stt: sttAdapter,
-            tts: ttsAdapter,
-            engine: intentEngine,
-          );
+            _controller = VoiceController(
+              stt: sttAdapter,
+              tts: ttsAdapter,
+              engine: intentEngine,
+            );
+          }
+
+          _wireController(_controller!);
+        } finally {
+          _isInitializing = false;
         }
-
-        _wireController(_controller!);
-        _isInitializing = false;
       }
 
       if (_controller!.isListening) {
