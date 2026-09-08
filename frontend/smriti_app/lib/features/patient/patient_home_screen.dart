@@ -6,6 +6,7 @@ import '../reminders/reminder_service.dart';
 import 'services/care_circle_service.dart';
 import 'widgets/reminder_card.dart';
 import '../../screens/home_screen.dart';
+import '../../screens/daily_games_screen.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key});
@@ -349,7 +350,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         children: [
           const SizedBox(height: 12),
           Text(
-            'Good Morning, $displayName 🌸',
+            'Good Morning, $displayName \u{1F338}',
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: const Color(0xFF0F5A4D),
                   fontWeight: FontWeight.w800,
@@ -366,38 +367,42 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Card 1: 1. Daily Games
+                    // Card 1: 1. Daily Games (Only Daily Calibration Test)
           _buildActivityCard(
             context: context,
             iconColor: const Color(0xFFA6EBCF),
-            iconData: Icons.sports_esports_rounded,
+            iconData: Icons.published_with_changes_rounded,
             badgeColor: const Color(0xFFB4EBA3),
-            badgeText: '1 of 3 Done',
+            badgeText: '1 Daily Test',
             badgeIcon: Icons.check_circle_rounded,
             title: '1. Daily Games',
-            subtitle: 'Today\'s gentle memory exercises • Tap to open',
+            subtitle: 'Daily Calibration Test \u2022 Tap to open',
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const DailyGamesScreen(),
+                ),
               );
             },
           ),
           const SizedBox(height: 18),
 
-          // Card 2: 2. More Games
+                    // Card 2: 2. More Games (Pulse Trainer, Wayfinder, Sequence Check)
           _buildActivityCard(
             context: context,
             iconColor: const Color(0xFFB4EBA3),
             iconData: Icons.extension_rounded,
             badgeColor: const Color(0xFFEFECE1),
-            badgeText: '8 Available',
+            badgeText: '3 Available',
             title: '2. More Games',
-            subtitle: 'Folklore, melodies & visual puzzles • Tap to browse',
+            subtitle: 'Pulse Trainer, Wayfinder & Sequence Check \u2022 Tap to browse',
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const HomeScreen(),
+                ),
               );
             },
           ),

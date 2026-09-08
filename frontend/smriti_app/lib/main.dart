@@ -8,6 +8,7 @@ import 'features/onboarding/cognitive_health_check_screen.dart';
 import 'features/caregiver/caregiver_dashboard_screen.dart';
 import 'features/asha/asha_dashboard_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/daily_games_screen.dart';
 
 void main() {
   runApp(const SmritiApp());
@@ -32,6 +33,7 @@ class SmritiApp extends StatelessWidget {
         '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
         '/asha-dashboard': (context) => const AshaDashboardScreen(),
         '/games': (context) => const HomeScreen(),
+        '/daily-games': (context) => const DailyGamesScreen(),
       },
     );
   }

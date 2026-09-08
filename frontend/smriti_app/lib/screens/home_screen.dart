@@ -5,9 +5,10 @@ import '../features/cognitive/spatial_memory/screens/wayfinder_home_screen.dart'
 import '../features/cognitive/working_memory/screens/sequence_home_screen.dart';
 import '../features/cognitive/telemetry/unified_data_exporter.dart';
 import '../features/cognitive/telemetry/telemetry_engine.dart';
-import '../features/cognitive/calibration/screens/daily_calibration_screen.dart';
 import '../theme/smriti_theme.dart';
 
+/// MoreGamesScreen / HomeScreen
+/// Displays the individual cognitive training games (Pulse Trainer, Wayfinder, Sequence Check)
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -17,18 +18,20 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: SmritiTheme.backgroundWarm,
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 10),
 
-              // ── Header Brand Section ──
+              // Header Brand Section with Back Button
               Row(
                 children: [
                   if (Navigator.canPop(context))
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: SmritiTheme.forestGreen),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                          color: SmritiTheme.forestGreen),
                       onPressed: () => Navigator.pop(context),
                       tooltip: 'Back to Home',
                     )
@@ -57,7 +60,10 @@ class HomeScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Smriti',
-                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineMedium
+                                  ?.copyWith(
                                     fontWeight: FontWeight.w900,
                                     color: SmritiTheme.forestGreen,
                                     fontSize: 30,
@@ -85,7 +91,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Welcome Banner
+              // Welcome Banner for More Games
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -107,7 +113,7 @@ class HomeScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Good Morning 🌸',
+                          'More Games \u{1F338}',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
@@ -115,13 +121,14 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: SmritiTheme.mintSoftBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text(
-                            'Calm Care',
+                            '3 Games Available',
                             style: TextStyle(
                               color: SmritiTheme.forestGreen,
                               fontSize: 12,
@@ -133,7 +140,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Choose a gentle cognitive exercise below to keep your mind sharp and active.',
+                      'Choose a gentle cognitive exercise below to practice focus, recall, and processing speed anytime.',
                       style: TextStyle(
                         fontSize: 14,
                         color: SmritiTheme.textSubtle,
@@ -145,32 +152,13 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // ── 24-Hour Daily Calibration Test Card ──
-              _buildGameCard(
-                context,
-                title: 'Daily Calibration Test',
-                subtitle: '24-Hour Seeded Baseline Test',
-                description: 'Randomized game variants & soundscapes changing every 24h for AI baseline modeling',
-                icon: Icons.published_with_changes_rounded,
-                iconBgColor: SmritiTheme.mintSoftBg,
-                iconColor: SmritiTheme.forestGreen,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DailyCalibrationScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // ── Game Cards ──
+              // Game 1: Pulse Trainer (Speed Processing)
               _buildGameCard(
                 context,
                 title: 'Pulse Trainer',
                 subtitle: 'Speed Processing',
-                description: 'React to gentle visual stimuli to measure processing speed',
+                description:
+                    'React to gentle visual stimuli to measure processing speed',
                 icon: Icons.flash_on_rounded,
                 iconBgColor: const Color(0xFFFEF3C7),
                 iconColor: const Color(0xFFD97706),
@@ -185,11 +173,13 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Game 2: Wayfinder (Spatial Memory)
               _buildGameCard(
                 context,
                 title: 'Wayfinder',
                 subtitle: 'Spatial Memory',
-                description: 'Navigate landmark paths from memory with calming soundscapes',
+                description:
+                    'Navigate landmark paths from memory with calming soundscapes',
                 icon: Icons.explore_rounded,
                 iconBgColor: const Color(0xFFCCFBF1),
                 iconColor: const Color(0xFF0D9488),
@@ -204,11 +194,13 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Game 3: Sequence Check (Working Memory)
               _buildGameCard(
                 context,
                 title: 'Sequence Check',
                 subtitle: 'Working Memory',
-                description: 'Watch visual patterns and recall sequences in order',
+                description:
+                    'Watch visual patterns and recall sequences in order',
                 icon: Icons.grid_view_rounded,
                 iconBgColor: const Color(0xFFF3E8FF),
                 iconColor: const Color(0xFF7C3AED),
@@ -223,18 +215,20 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // ── Export All Data Button ──
+              // Export AI Raw Telemetry Button
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: SmritiTheme.forestGreen, width: 1.5),
+                  side: const BorderSide(
+                      color: SmritiTheme.forestGreen, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   backgroundColor: SmritiTheme.cardWhite,
                 ),
                 onPressed: () => _showExportDialog(context),
-                icon: const Icon(Icons.download_rounded, color: SmritiTheme.forestGreen),
+                icon: const Icon(Icons.download_rounded,
+                    color: SmritiTheme.forestGreen),
                 label: const Text(
                   'Export AI Raw Telemetry (JSON)',
                   style: TextStyle(
@@ -322,7 +316,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: SmritiTheme.backgroundWarm,
                   shape: BoxShape.circle,
                 ),
@@ -435,7 +429,8 @@ class HomeScreen extends StatelessWidget {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Raw Telemetry JSON copied to clipboard!'),
+                          content:
+                              Text('Raw Telemetry JSON copied to clipboard!'),
                           backgroundColor: SmritiTheme.forestGreen,
                         ),
                       );
@@ -459,3 +454,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+/// Alias so both MoreGamesScreen and HomeScreen can be used interchangeably
+typedef MoreGamesScreen = HomeScreen;
