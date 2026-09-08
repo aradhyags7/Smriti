@@ -7,7 +7,7 @@ class ApiEndpoints {
   static const String _envUrl = String.fromEnvironment('BACKEND_URL');
 
   // Change this to your exact Render URL (or pass via --dart-define)
-  static String liveBackendUrl = 'https://smriti-backend.onrender.com';
+  static String liveBackendUrl = 'https://smriti-rmbr.onrender.com';
 
   static String get baseUrl {
     // 1. Build-time override via --dart-define=BACKEND_URL=...
