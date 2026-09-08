@@ -6,30 +6,11 @@ class ApiEndpoints {
   // flutter build apk --dart-define=BACKEND_URL=https://your-service.onrender.com
   static const String _envUrl = String.fromEnvironment('BACKEND_URL');
 
-  // Change this to your exact Render URL (or pass via --dart-define)
+  // Production Render cloud backend URL
   static String liveBackendUrl = 'https://smriti-rmbr.onrender.com';
 
-  static String get baseUrl {
-    // 1. Build-time override via --dart-define=BACKEND_URL=...
-    if (_envUrl.isNotEmpty) {
-      return _envUrl.endsWith('/') ? _envUrl.substring(0, _envUrl.length - 1) : _envUrl;
-    }
-
-    // 2. In release/APK mode, always use the live cloud backend
-    if (kReleaseMode || kProfileMode) {
-      return liveBackendUrl.endsWith('/')
-          ? liveBackendUrl.substring(0, liveBackendUrl.length - 1)
-          : liveBackendUrl;
-    }
-
-    // 3. If live URL is set to an active https server, use it
-    if (liveBackendUrl.isNotEmpty && liveBackendUrl.startsWith('https://')) {
-      return liveBackendUrl.endsWith('/')
-          ? liveBackendUrl.substring(0, liveBackendUrl.length - 1)
-          : liveBackendUrl;
-    }
-
-    // 4. Local development fallbacks
+  // Local development fallback for emulators and local testing
+  static String get localFallbackUrl {
     if (kIsWeb) return 'http://127.0.0.1:8000';
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -37,6 +18,25 @@ class ApiEndpoints {
       default:
         return 'http://127.0.0.1:8000';
     }
+  }
+
+  static String get baseUrl {
+    // 1. Build-time override via --dart-define=BACKEND_URL=...
+    if (_envUrl.isNotEmpty) {
+      return _envUrl.endsWith('/') ? _envUrl.substring(0, _envUrl.length - 1) : _envUrl;
+    }
+
+    // 2. In release/APK mode (standalone APK on real phones), ALWAYS use the live cloud backend
+    if (kReleaseMode || kProfileMode) {
+      return liveBackendUrl.endsWith('/')
+          ? liveBackendUrl.substring(0, liveBackendUrl.length - 1)
+          : liveBackendUrl;
+    }
+
+    // 3. In debug mode: try live backend first, with automatic local fallback in ApiClient
+    return liveBackendUrl.endsWith('/')
+        ? liveBackendUrl.substring(0, liveBackendUrl.length - 1)
+        : liveBackendUrl;
   }
 
   static String get rootHealth => '$baseUrl/';
