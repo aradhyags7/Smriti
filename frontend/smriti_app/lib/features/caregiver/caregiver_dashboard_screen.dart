@@ -1357,6 +1357,10 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
             _buildPatientProfileHeader(patient),
             const SizedBox(height: 20),
 
+            // ASHA Medical & Home Visit Notes (Visible to Caregiver)
+            _buildAshaMedicalNotesSection(patient),
+            const SizedBox(height: 20),
+
             // SECTION 2: Cognitive Analytics (Line chart + Risk Level + Filter pills)
             _buildCognitiveAnalyticsSection(),
             const SizedBox(height: 20),
@@ -1439,6 +1443,137 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
   }
 
   // SECTION 1: Patient Profile Header
+  
+  Widget _buildAshaMedicalNotesSection(CaregiverPatient patient) {
+    final notes = patient.medicalNotes;
+    final List<String> notesList = (notes != null && notes.trim().isNotEmpty)
+        ? notes.split('\n').where((s) => s.trim().isNotEmpty).toList()
+        : [];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1EFE3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.health_and_safety, color: Color(0xFF23654D), size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ASHA Medical & Home Visit Notes',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    Text(
+                      patient.ashaName != null
+                          ? 'Assigned Worker: ${patient.ashaName}'
+                          : 'Community healthcare observations',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF5A7264)),
+                    ),
+                  ],
+                ),
+              ),
+              if (patient.ashaPhone != null)
+                IconButton(
+                  icon: const Icon(Icons.phone, color: Color(0xFF23654D)),
+                  tooltip: 'Call ASHA Worker',
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Calling ASHA Worker (${patient.ashaPhone})...')),
+                    );
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+          if (notesList.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9F8F4),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.pending_actions_outlined, color: Color(0xFF5A7264), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'No clinical notes recorded yet by the ASHA worker. Home visit observations will appear here.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Column(
+              children: notesList.map((note) {
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1EFE3).withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD4CEB8).withValues(alpha: 0.6)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.note_alt_outlined, color: Color(0xFF23654D), size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          note,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.primary,
+                            height: 1.4,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPatientProfileHeader(CaregiverPatient patient) {
     // Risk level styling
     final riskLevel = _analyticsData?.riskLevel ?? 'STABLE';

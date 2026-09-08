@@ -61,7 +61,8 @@ def test_google_login_fails_if_server_client_id_unconfigured(client):
 
 def test_google_login_rejects_invalid_token(client):
     """Google auth must reject malformed tokens with HTTP 401."""
-    with patch.object(settings, "GOOGLE_SERVER_CLIENT_ID", "mock-client-id.apps.googleusercontent.com"):
+    with patch.object(settings, "GOOGLE_SERVER_CLIENT_ID", "mock-client-id.apps.googleusercontent.com"), \
+         patch("google.oauth2.id_token.verify_oauth2_token", side_effect=ValueError("Signature verification failed")):
         resp = client.post(
             "/api/v1/auth/google",
             json={"id_token": "malformed.invalid.token"},

@@ -66,6 +66,10 @@ class ApiEndpoints {
   static String get ashaCommunityPatients => '$baseUrl/api/v1/asha/community-patients';
   static String get ashaAssignPatient => '$baseUrl/api/v1/asha/assign-patient';
   static String ashaUnassignPatient(String patientId) => '$baseUrl/api/v1/asha/unassign-patient/$patientId';
+  static String get ashaTriageBoard => '$baseUrl/api/v1/asha/triage-board';
+  static String get ashaEmergencyAlerts => '$baseUrl/api/v1/asha/emergency-alerts';
+  static String ashaMedicalNotes(String patientId) => '$baseUrl/api/v1/asha/patient/$patientId/medical-notes';
+  static String ashaPatientDetail(String patientId) => '$baseUrl/api/v1/asha/patient/$patientId/detail';
 
   // Patient Care Circle
   static String get patientCareCircle => '$baseUrl/api/v1/asha/care-circle';

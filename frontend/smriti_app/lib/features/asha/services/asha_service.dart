@@ -16,11 +16,18 @@ class AshaPatient {
   final String district;
   final String status;
   final String statusColor;
+  final String triagePriority;
   final bool consentForAsha;
   final String? caregiverName;
   final String? caregiverPhone;
+  final String? caregiverRelationship;
   final double baselineMemory;
+  final double baselineAttention;
+  final double baselineEngagement;
+  final String primaryLanguage;
+  final String? medicalNotes;
   final String lastVisit;
+  final int unresolvedAlertsCount;
 
   AshaPatient({
     required this.patientId,
@@ -35,11 +42,18 @@ class AshaPatient {
     required this.district,
     required this.status,
     required this.statusColor,
+    this.triagePriority = 'STABLE',
     required this.consentForAsha,
     this.caregiverName,
     this.caregiverPhone,
+    this.caregiverRelationship = 'Family Caregiver',
     required this.baselineMemory,
+    this.baselineAttention = 70.0,
+    this.baselineEngagement = 70.0,
+    this.primaryLanguage = 'en',
+    this.medicalNotes,
     required this.lastVisit,
+    this.unresolvedAlertsCount = 0,
   });
 
   factory AshaPatient.fromJson(Map<String, dynamic> json) {
@@ -56,11 +70,18 @@ class AshaPatient {
       district: json['district'] ?? 'Kamrup',
       status: json['status'] ?? 'Stable',
       statusColor: json['status_color'] ?? 'green',
+      triagePriority: json['triage_priority'] ?? 'STABLE',
       consentForAsha: json['consent_for_asha'] ?? true,
       caregiverName: json['caregiver_name'],
       caregiverPhone: json['caregiver_phone'],
+      caregiverRelationship: json['caregiver_relationship'] ?? 'Family Caregiver',
       baselineMemory: (json['baseline_memory'] as num?)?.toDouble() ?? 70.0,
+      baselineAttention: (json['baseline_attention'] as num?)?.toDouble() ?? 70.0,
+      baselineEngagement: (json['baseline_engagement'] as num?)?.toDouble() ?? 70.0,
+      primaryLanguage: json['primary_language'] ?? 'en',
+      medicalNotes: json['medical_notes'],
       lastVisit: json['last_visit'] ?? 'Recent',
+      unresolvedAlertsCount: json['unresolved_alerts_count'] ?? 0,
     );
   }
 }
@@ -93,6 +114,80 @@ class CommunityPatient {
       phoneNumber: json['phone_number'],
       isAssigned: json['is_assigned'] ?? false,
       assignedAshaName: json['assigned_asha_name'],
+    );
+  }
+}
+
+class AshaEmergencyAlert {
+  final String id;
+  final String patientId;
+  final String patientName;
+  final int patientAge;
+  final String riskLevel;
+  final String severity;
+  final String reason;
+  final bool isAcknowledged;
+  final String createdAt;
+
+  AshaEmergencyAlert({
+    required this.id,
+    required this.patientId,
+    required this.patientName,
+    required this.patientAge,
+    required this.riskLevel,
+    required this.severity,
+    required this.reason,
+    required this.isAcknowledged,
+    required this.createdAt,
+  });
+
+  factory AshaEmergencyAlert.fromJson(Map<String, dynamic> json) {
+    return AshaEmergencyAlert(
+      id: json['id'] ?? '',
+      patientId: json['patient_id'] ?? '',
+      patientName: json['patient_name'] ?? 'Patient',
+      patientAge: json['patient_age'] ?? 72,
+      riskLevel: json['risk_level'] ?? 'MONITOR',
+      severity: json['severity'] ?? 'MEDIUM',
+      reason: json['reason'] ?? '',
+      isAcknowledged: json['is_acknowledged'] ?? false,
+      createdAt: json['created_at'] ?? '',
+    );
+  }
+}
+
+class AshaPatientDetailData {
+  final AshaPatient patient;
+  final Map<String, dynamic>? analytics;
+  final Map<String, dynamic>? activityFeed;
+  final List<AshaEmergencyAlert> alerts;
+  final List<String> medicalNotesHistory;
+
+  AshaPatientDetailData({
+    required this.patient,
+    this.analytics,
+    this.activityFeed,
+    required this.alerts,
+    required this.medicalNotesHistory,
+  });
+
+  factory AshaPatientDetailData.fromJson(Map<String, dynamic> json) {
+    final patientJson = json['patient'] as Map<String, dynamic>? ?? {};
+    final alertsList = (json['alerts'] as List<dynamic>?)
+            ?.map((e) => AshaEmergencyAlert.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+    final notesList = (json['medical_notes_history'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+
+    return AshaPatientDetailData(
+      patient: AshaPatient.fromJson(patientJson),
+      analytics: json['analytics'] as Map<String, dynamic>?,
+      activityFeed: json['activity_feed'] as Map<String, dynamic>?,
+      alerts: alertsList,
+      medicalNotesHistory: notesList,
     );
   }
 }
@@ -169,5 +264,79 @@ class AshaService {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<Map<String, dynamic>?> fetchTriageBoard() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.ashaTriageBoard),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<dynamic> patientsRaw = data['patients'] ?? [];
+        final patients = patientsRaw.map((p) => AshaPatient.fromJson(p)).toList();
+        return {
+          'total_patients': data['total_patients'] ?? patients.length,
+          'critical_count': data['critical_count'] ?? 0,
+          'attention_count': data['attention_count'] ?? 0,
+          'monitor_count': data['monitor_count'] ?? 0,
+          'stable_count': data['stable_count'] ?? 0,
+          'patients': patients,
+        };
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<List<AshaEmergencyAlert>> fetchEmergencyAlerts() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.ashaEmergencyAlerts),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => AshaEmergencyAlert.fromJson(item)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<bool> updateMedicalNotes({
+    required String patientId,
+    required String notes,
+    String? visitDate,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final Map<String, dynamic> payload = {'notes': notes};
+      if (visitDate != null) payload['visit_date'] = visitDate;
+      final response = await http.post(
+        Uri.parse(ApiEndpoints.ashaMedicalNotes(patientId)),
+        headers: headers,
+        body: jsonEncode(payload),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<AshaPatientDetailData?> fetchPatientDetail(String patientId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.ashaPatientDetail(patientId)),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return AshaPatientDetailData.fromJson(data);
+      }
+    } catch (_) {}
+    return null;
   }
 }
