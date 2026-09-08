@@ -799,7 +799,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                         final minStr = selectedTime.minute.toString().padLeft(2, '0');
                         final timeString = '$hourStr:$minStr:00';
 
-                        final created = await _reminderService.createReminder(
+                        final created = await _reminderService.createRemoteReminder(
                           title: title,
                           reminderType: selectedType,
                           scheduledTime: timeString,
