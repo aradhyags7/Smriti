@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import 'services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -12,7 +13,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
   String _role = 'patient';
+  bool _isLoading = false;
 
   @override
   void didChangeDependencies() {
@@ -23,14 +26,89 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  void _handleSignup() {
-    // Basic mock signup
-    if (_role == 'caregiver') {
-      Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
-    } else if (_role == 'asha') {
-      Navigator.pushReplacementNamed(context, '/asha-dashboard');
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSignup() async {
+    final fullName = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (fullName.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all fields (Full Name, Email, and Password).'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    if (!email.contains('@') || !email.contains('.')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 6 characters long.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final signupResult = await _authService.signup(
+      fullName: fullName,
+      email: email,
+      password: password,
+      role: _role,
+    );
+
+    if (!mounted) return;
+
+    if (signupResult['success'] == true) {
+      // Auto-login upon registration
+      final loginResult = await _authService.login(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (loginResult['success'] == true) {
+        if (_role == 'caregiver') {
+          Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
+        } else if (_role == 'asha') {
+          Navigator.pushReplacementNamed(context, '/asha-dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } else {
+        Navigator.pushReplacementNamed(context, '/login', arguments: {'role': _role});
+      }
     } else {
-      Navigator.pushReplacementNamed(context, '/home');
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(signupResult['error'] ?? 'Signup failed'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
@@ -92,9 +170,11 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 20),
               TextField(
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'Email / Phone Number',
-                  prefixIcon: Icon(Icons.contact_mail_outlined, color: AppColors.primary),
+                  labelText: 'Email Address',
+                  hintText: 'name@example.com',
+                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
                 ),
               ),
               const SizedBox(height: 20),
@@ -102,14 +182,23 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: _passwordController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'Password',
+                  labelText: 'Password (min 6 characters)',
                   prefixIcon: Icon(Icons.lock_outline, color: AppColors.primary),
                 ),
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: _handleSignup,
-                child: const Text('Sign Up'),
+                onPressed: _isLoading ? null : _handleSignup,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Sign Up'),
               ),
               const SizedBox(height: 24),
               Row(

@@ -32,13 +32,15 @@ def get_current_user(
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
-        phone_number: str = payload.get("sub")
-        if not phone_number:
+        sub: str = payload.get("sub")
+        if not sub:
             raise credentials_exception
     except (JWTError, Exception):
         raise credentials_exception
 
-    user = db.query(User).filter(User.phone_number == phone_number).first()
+    user = db.query(User).filter(
+        (User.email == sub) | (User.phone_number == sub) | (User.id == sub)
+    ).first()
     if user is None:
         raise credentials_exception
 

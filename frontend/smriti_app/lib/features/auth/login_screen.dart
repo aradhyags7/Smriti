@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import 'services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,7 +12,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
   String _role = 'patient';
+  bool _isLoading = false;
 
   @override
   void didChangeDependencies() {
@@ -22,14 +25,63 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _handleLogin() {
-    // Basic mock login
-    if (_role == 'caregiver') {
-      Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
-    } else if (_role == 'asha') {
-      Navigator.pushReplacementNamed(context, '/asha-dashboard');
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter both your email address and password.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    if (!email.contains('@') || !email.contains('.')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await _authService.login(
+      email: email,
+      password: password,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      final userRole = (result['data']?['role'] ?? _role).toString().toLowerCase();
+      if (userRole == 'caregiver') {
+        Navigator.pushReplacementNamed(context, '/caregiver-dashboard');
+      } else if (userRole == 'asha') {
+        Navigator.pushReplacementNamed(context, '/asha-dashboard');
+      } else {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } else {
-      Navigator.pushReplacementNamed(context, '/home');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['error'] ?? 'Login failed'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
@@ -83,9 +135,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 48),
               TextField(
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'Email / Phone Number',
-                  prefixIcon: Icon(Icons.person_outline, color: AppColors.primary),
+                  labelText: 'Email Address',
+                  hintText: 'name@example.com',
+                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
                 ),
               ),
               const SizedBox(height: 20),
@@ -110,8 +164,17 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _handleLogin,
-                child: const Text('Sign In'),
+                onPressed: _isLoading ? null : _handleLogin,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Sign In'),
               ),
               const SizedBox(height: 24),
               Row(

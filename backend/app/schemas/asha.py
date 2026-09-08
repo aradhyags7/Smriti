@@ -1,15 +1,8 @@
-"""
-ASHA worker schemas for the SMRITI platform.
-
-ASHA (Accredited Social Health Activist) workers use the triage
-dashboard to monitor their assigned patients, view cognitive trends,
-and prioritise home visits.  Access requires valid patient consent.
-"""
+"""ASHA Worker schemas for SMRITI platform."""
 
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from .alert import AlertSeverity
@@ -137,5 +130,68 @@ class AshaTriageResponse(BaseModel):
         ...,
         description="Server timestamp when the triage was computed.",
     )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Dynamic Assignment & Portal Schemas
+# ---------------------------------------------------------------------------
+
+class AshaWorkerResponse(BaseModel):
+    id: str
+    user_id: Optional[str] = None
+    name: str
+    phone: Optional[str] = None
+    village_assigned: str
+    district: str
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AssignPatientRequest(BaseModel):
+    patient_id: str
+    village_notes: Optional[str] = None
+
+
+class AshaPatientItem(BaseModel):
+    patient_id: str
+    user_id: str
+    full_name: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    age: Optional[int] = 72
+    gender: Optional[str] = "other"
+    village: str = "Guwahati Sector"
+    district: str = "Kamrup"
+    status: str = "Stable"
+    status_color: str = "green"
+    consent_for_asha: bool = True
+    caregiver_name: Optional[str] = None
+    caregiver_phone: Optional[str] = None
+    baseline_memory: float = 70.0
+    last_visit: str = "Recent"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CommunityPatientItem(BaseModel):
+    patient_id: str
+    user_id: str
+    full_name: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    is_assigned: bool = False
+    assigned_asha_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CareCircleResponse(BaseModel):
+    caregiver: Optional[dict] = None
+    asha_worker: Optional[dict] = None
+    patient_name: str
+    patient_email: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
